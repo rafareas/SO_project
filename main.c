@@ -3,11 +3,12 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <time.h>
 
 int executa(char** comando){
     int return_exec;
     int status;
-    int i = 0;
+    
     //printf("%s\n",comando[0]);
 
     pid_t res = fork();
@@ -18,7 +19,9 @@ int executa(char** comando){
         else if(res==0){
             //codigo do filho
             //printf("FILHO\n");
+           
            return_exec=execvp(comando[0],comando);
+           
            _exit(return_exec);
         }
         else{
@@ -31,20 +34,28 @@ int executa(char** comando){
 
 int main(int argc,char** argv){
     int ret=0;
-    if(strcmp(argv[1],"-u")==0){
-        int i=2;
-        int k=0;
-        char *comando[argc];
-        while(i<argc && k<argc){
-            comando[k] = strdup(argv[i]);
-            //printf("%s\n",comando[k]);
-            k++;
-            i++;
+    clock_t start_t, end_t;
+    double total_t;
+    if(strcmp(argv[1],"execute")==0){
+        if(strcmp(argv[2],"-u")==0){
+            int i=3;
+            int k=0;
+            char *comando[argc];
+            while(i<argc && k<argc){
+                comando[k] = strdup(argv[i]);
+                //printf("%s\n",comando[k]);
+                k++;
+                i++;
+            }
+            comando[k]=NULL;
+            //printf("%s\n\n",comando[0]);
+            
+            start_t = clock();
+            ret = executa(comando);
+            end_t = clock();
+            total_t = (double) (end_t-start_t) / CLOCKS_PER_SEC;
+            printf("%f\n",total_t);
         }
-        comando[k]=NULL;
-        //printf("%s\n\n",comando[0]);
-        ret = executa(comando);
     }
-
     return ret;
 }
