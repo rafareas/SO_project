@@ -14,7 +14,6 @@ int main(int argc, char ** argv){
     if (fd < 0){
         perror("Error to open fifo\n");
     }
-    
 
     int res;
     char buffer[50];
