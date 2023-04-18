@@ -19,6 +19,12 @@ int executaU(char* comando){
     char *nova_string=strdup(comando);
     char *string;
 
+    int fd = open("fifo",O_WRONLY);
+
+    if(fd < 0){
+        perror("Error to open fifo\n");
+    }
+
     while((string=strsep(&nova_string," "))!=NULL){
         //printf("%s\n\n",string);
         exec_args[i]=string;
@@ -34,16 +40,27 @@ int executaU(char* comando){
         perror("Erro no fork");
     }
     if(res==0){
+
+        pid_t filho = getpid();
+        char buffer[20];
+        //printf("O pid é %d\n",filho);
+        int a = snprintf(buffer,20,"o pid é %d\n",filho);
+        write(1,buffer,a);
+        write(fd,buffer,a);
+        
         return_exec=execvp(exec_args[0],exec_args);
         _exit(return_exec);
+
         }
 
     else{
+
             pid_t wait_pid = wait(&status);
             if(WIFEXITED(status)){
                 printf("Pai o filho %d terminou com exit code %d\n",wait_pid,WEXITSTATUS(status));
-            }
-        }    
+            
+        }
+    }    
 }
 
 //funciona com apenas dois programas
@@ -125,9 +142,9 @@ int main(int argc, char **argv){
     //Inicializacao FIFO
     int create_fifo = mkfifo("fifo",0660);
 
-    if(create_fifo < 0){
-        perror("Error in the creation of fifo.\n");
-    }
+    //if(create_fifo < 0){
+    //    perror("Error in the creation of fifo.\n");
+    //}
 
     //Open do file descriptor
     int fd = open("fifo",O_WRONLY);
@@ -140,11 +157,17 @@ int main(int argc, char **argv){
     double total_t;
     if(strcmp(argv[1],"execute")==0){
         if(strcmp(argv[2],"-u")==0){
-            int i=3;
-            int k=0;
+            
             char *comando = strdup(argv[3]);
             //printf("%s\n\n",comando);
             
+            char buffer[20];
+            char *ex = "executaU\n";
+            int t = snprintf(buffer,20,"%s",ex);
+            write(1,buffer,t);
+            write(fd,buffer,t);
+            close(fd);
+
             start_t = clock();
             ret = executaU(comando);
             end_t = clock();
@@ -152,8 +175,7 @@ int main(int argc, char **argv){
             printf("%f\n",total_t);
         }
         else if(strcmp(argv[2],"-p")==0){
-            int i=3;
-            int k=0;
+            
             char *comando = strdup(argv[3]);
             //printf("%s\n\n",comando);
             
@@ -164,11 +186,17 @@ int main(int argc, char **argv){
             printf("%f\n",total_t);
         }
     }
-
-    write(fd,argv[1],sizeof(argv[1]));
+    else if (strcmp(argv[1],"exit")==0){
+            char buffer[20];
+            char *ex = "exit\n";
+            int t = snprintf(buffer,20,"%s",ex);
+            write(1,buffer,t);
+            write(fd,buffer,t);
+            close(fd);
+    }
 
     close(fd);
-    unlink("fifo");
+    //unlink("fifo");
     printf("Terminei\n");
 
     return 0;
