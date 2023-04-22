@@ -10,30 +10,49 @@
 
 int main(int argc, char ** argv){
 
+    while(1){
+
     int fd = open("fifo",O_RDONLY);
 
     if (fd < 0){
         perror("Error to open fifo\n");
     }
 
-    int res;
+    int bytes_read,res;
+    
+
     char buffer[20];
 
-    int fd1 = open("fifo",O_WRONLY);
-    while ((res = read(fd,&buffer,sizeof(buffer)))>0){
-            if(strcmp(buffer,"executaU\n")==0){
-                printf("entrei\n");
+    while ((bytes_read = read(fd,&buffer,sizeof(buffer)))>0){
+        //printf("estou na comparaçao\n");
+        if(strcmp(buffer,"executaU\n")==0){
+            memset(buffer,0,sizeof(buffer));
+            res=fork();
+            if(res==0){
+                //printf("entrei\n");
                 int res;
                 char buffer2[20];
                 while((res = read(fd,&buffer2,sizeof(buffer2)))>0){
                     write(1,&buffer2,sizeof(buffer));
-                    if(strcmp(buffer2,"exit\n")==0) return 0;
-                    printf("estou aqui\n");
-                }
+                    //printf("estou aqui\n");
+                    memset(buffer2,0,sizeof(buffer2));
+                 }
+            close(fd);
+            _exit(0);
             }
-            
+            else{
+                int status;
+                pid_t terminated_pid = wait(NULL);
+                close(fd);
+            }
+        }
+        //tenho de implementar melhor este exit
+        else{
+            printf("estou no exit\n");
+            return 0;
+        }
     }
-    
-    close(fd);
-    return 0;
+    //close (fd);
+}
+return 0;
 }

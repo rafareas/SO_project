@@ -14,6 +14,9 @@ int executaU(char* comando){
     int status;
     int k = 0;
     int i=0;
+
+    clock_t start_t, end_t;
+    double total_t;
     
     char *exec_args[20];
     char *nova_string=strdup(comando);
@@ -44,10 +47,15 @@ int executaU(char* comando){
         pid_t filho = getpid();
         char buffer[20];
         //printf("O pid é %d\n",filho);
-        int a = snprintf(buffer,20,"o pid é %d\n",filho);
-        write(1,buffer,a);
-        write(fd,buffer,a);
-        
+        int t1 = snprintf(buffer,20,"%d ",filho);
+        write(1,buffer,t1);
+        write(fd,buffer,t1);
+
+        start_t = clock();
+        printf("\n%ld\n\n",start_t);
+        int t2 = snprintf(buffer,20,"%ld ",start_t);
+        //write(1,buffer,t2);
+        write(fd,buffer,t2);
         return_exec=execvp(exec_args[0],exec_args);
         _exit(return_exec);
 
@@ -55,11 +63,20 @@ int executaU(char* comando){
 
     else{
 
-            pid_t wait_pid = wait(&status);
-            if(WIFEXITED(status)){
-                printf("Pai o filho %d terminou com exit code %d\n",wait_pid,WEXITSTATUS(status));
+        pid_t wait_pid = wait(&status);
+        
+        char buffer[20];
+        end_t = clock();
+        printf("\n%ld\n\n",end_t);
+        int t = snprintf(buffer,20,"%ld ",end_t);
+        //write(1,buffer,t);
+        write(fd,buffer,t);
+
+        if(WIFEXITED(status)){
+            printf("Pai o filho %d terminou com exit code %d\n",wait_pid,WEXITSTATUS(status));
             
         }
+        close(fd);
     }    
 }
 
@@ -179,11 +196,11 @@ int main(int argc, char **argv){
             char *comando = strdup(argv[3]);
             //printf("%s\n\n",comando);
             
-            start_t = clock();
+            //start_t = clock();
             ret = executaP(comando);
-            end_t = clock();
-            total_t = (double) (end_t-start_t) / CLOCKS_PER_SEC;
-            printf("%f\n",total_t);
+            //end_t = clock();
+            //total_t = (double) (end_t-start_t) / CLOCKS_PER_SEC;
+            //printf("%f\n",total_t);
         }
     }
     else if (strcmp(argv[1],"exit")==0){
