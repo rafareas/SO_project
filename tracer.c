@@ -9,6 +9,37 @@
 #include <time.h>
 #include <string.h>
 
+typedef struct PidCreate{
+    char name[200];
+    int tempExec; 
+}PidCreate;
+
+void escreveFicheiro(char *nome){
+    int res, time_temp = 2;
+    char nomeF[100];
+
+    PidCreate mypid;
+
+    strcpy(nomeF, nome);
+    strcat(nomeF, ".txt");
+
+    int fd = open(nome, O_CREAT | O_WRONLY | O_APPEND, 0600);
+    if(fd == -1){
+        perror("Erro ao criar ficheiro");
+        _exit(0);
+    }
+
+    strcpy(mypid.name,nome);
+    mypid.tempExec = time_temp;
+
+    res = write(fd,&mypid,sizeof(PidCreate));
+
+
+    close(fd);
+}
+
+
+
 int executaU(char* comando){        
     int return_exec;
     int status;
@@ -156,7 +187,13 @@ int executaP(char* comando){
 int main(int argc, char **argv){
     int ret=0;
 
+    //teste pid nome
+    int mp = getpid();
+    char str[10];
+    sprintf(str, "%d", mp);
+    escreveFicheiro(str);
     //Inicializacao FIFO
+    
     int create_fifo = mkfifo("fifo",0660);
 
     //if(create_fifo < 0){
