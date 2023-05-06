@@ -9,37 +9,6 @@
 #include <time.h>
 #include <string.h>
 
-typedef struct PidCreate{
-    char name[200];
-    int tempExec; 
-}PidCreate;
-
-void escreveFicheiro(char *nome){
-    int res, time_temp = 2;
-    char nomeF[100];
-
-    PidCreate mypid;
-
-    strcpy(nomeF, nome);
-    strcat(nomeF, ".txt");
-
-    int fd = open(nome, O_CREAT | O_WRONLY | O_APPEND, 0600);
-    if(fd == -1){
-        perror("Erro ao criar ficheiro");
-        _exit(0);
-    }
-
-    strcpy(mypid.name,nome);
-    mypid.tempExec = time_temp;
-
-    res = write(fd,&mypid,sizeof(PidCreate));
-
-
-    close(fd);
-}
-
-
-
 int executaU(char* comando){        
     int return_exec;
     int status;
@@ -58,6 +27,12 @@ int executaU(char* comando){
     if(fd < 0){
         perror("Error to open fifo\n");
     }
+
+    char buffer[20];
+    char *ex = "executaU ";
+    int t = snprintf(buffer,20,"%s",ex);
+    write(1,buffer,t);
+    write(fd,buffer,t);
 
     while((string=strsep(&nova_string," "))!=NULL){
         //printf("%s\n\n",string);
@@ -84,9 +59,9 @@ int executaU(char* comando){
 
         start_t = clock();
         printf("\n%ld\n\n",start_t);
-        int t2 = snprintf(buffer,20,"%ld ",start_t);
+        //int t2 = snprintf(buffer,20,"%ld ",start_t);
         //write(1,buffer,t2);
-        write(fd,buffer,t2);
+        //write(fd,buffer,t2);
         return_exec=execvp(exec_args[0],exec_args);
         _exit(return_exec);
 
@@ -101,7 +76,7 @@ int executaU(char* comando){
         printf("\n%ld\n\n",end_t);
         int t = snprintf(buffer,20,"%ld ",end_t);
         //write(1,buffer,t);
-        write(fd,buffer,t);
+        //write(fd,buffer,t);
 
         if(WIFEXITED(status)){
             printf("Pai o filho %d terminou com exit code %d\n",wait_pid,WEXITSTATUS(status));
@@ -187,13 +162,7 @@ int executaP(char* comando){
 int main(int argc, char **argv){
     int ret=0;
 
-    //teste pid nome
-    int mp = getpid();
-    char str[10];
-    sprintf(str, "%d", mp);
-    escreveFicheiro(str);
     //Inicializacao FIFO
-    
     int create_fifo = mkfifo("fifo",0660);
 
     //if(create_fifo < 0){
@@ -201,11 +170,11 @@ int main(int argc, char **argv){
     //}
 
     //Open do file descriptor
-    int fd = open("fifo",O_WRONLY);
+    //int fd = open("fifo",O_WRONLY);
 
-    if(fd < 0){
-        perror("Error to open fifo\n");
-    }
+    //if(fd < 0){
+    //    perror("Error to open fifo\n");
+    //}
     
     clock_t start_t, end_t;
     double total_t;
@@ -215,12 +184,7 @@ int main(int argc, char **argv){
             char *comando = strdup(argv[3]);
             //printf("%s\n\n",comando);
             
-            char buffer[20];
-            char *ex = "executaU\n";
-            int t = snprintf(buffer,20,"%s",ex);
-            write(1,buffer,t);
-            write(fd,buffer,t);
-            close(fd);
+            //close(fd);
 
             start_t = clock();
             ret = executaU(comando);
@@ -241,15 +205,15 @@ int main(int argc, char **argv){
         }
     }
     else if (strcmp(argv[1],"exit")==0){
-            char buffer[20];
-            char *ex = "exit\n";
-            int t = snprintf(buffer,20,"%s",ex);
-            write(1,buffer,t);
-            write(fd,buffer,t);
-            close(fd);
+            //char buffer[20];
+            //char *ex = "exit ";
+            //int t = snprintf(buffer,20,"%s",ex);
+            //write(1,buffer,t);
+            //write(fd,buffer,t);
+            //close(fd);
     }
 
-    close(fd);
+    //close(fd);
     //unlink("fifo");
     printf("Terminei\n");
 

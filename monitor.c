@@ -7,6 +7,15 @@
 #include <unistd.h> /* chamadas ao sistema: defs e decls essenciais */
 #include <sys/wait.h> /* chamadas wait*() e macros relacionadas */
 #include <string.h>
+#include <math.h>
+
+typedef struct Program{
+    char name[200];
+    int age;
+} Program;
+
+
+
 
 int main(int argc, char ** argv){
 
@@ -18,65 +27,94 @@ int main(int argc, char ** argv){
         perror("Error to open fifo\n");
     }
 
-    int bytes_read,res;
+    int bytes_read;
     
-
     char buffer[20];
+    int res;
+    int i=0;
+    char *exec_args[10];
 
     while ((bytes_read = read(fd,&buffer,sizeof(buffer)))>0){
-        printf("estou na comparaçao\n");
-        printf("%s\n",buffer);
-        if(strcmp(buffer,"executaU\n")==0){
-            memset(buffer,0,sizeof(buffer));
-            printf("entrei aqui\n");
-            res=fork();
-            if(res==0){
-                //printf("entrei\n");
-                int res;
-                char buffer2[20];
-                for(int i=0 ;(res = read(fd,&buffer2,sizeof(buffer2)))>0 && i<3;i++){
-                    switch(i){
-                    case 0:
-                    write(1,&buffer2,sizeof(buffer));
-                    int num = atoi(buffer2);
-                    //printf("estou aqui\n");
-                    memset(buffer2,0,sizeof(buffer2));
-                    printf("\ncase 0\n");
-                    break;
-
-                    case 1:
-                        write(1,&buffer2,sizeof(buffer));
-                        num = atoi(buffer2);
-                        //printf("estou aqui\n");
-                        memset(buffer2,0,sizeof(buffer2));
-
-                        printf("case 1\n");
-                        break;
-
-                    case 2:
-                        printf("case 2\n");
-                        memset(buffer2,0,sizeof(buffer2));
-                        break;
-
-                    }
-                 }
-            close(fd);
-            _exit(0);
-            }
-            else{
-                int status;
-                //memset(buffer,0,sizeof(buffer));
-                pid_t terminated_pid = wait(NULL);
-                close(fd);
-            }
-        }
-        //tenho de implementar melhor este exit
-        //else{
-        //    printf("estou no exit\n");
-        //    return 0;
-        //}
+        res+=bytes_read;
+        //write(1,&buffer,sizeof(buffer));
+        char *string = malloc(bytes_read);
+        
+        printf("%s\n",string);
+        
+        //printf("\n--------memset--------\n");
+        memcpy(string,buffer,bytes_read);
+        memset(buffer,0,sizeof(buffer));
+        exec_args[i]=string;
+        //printf("\n---------memcpy-------\n");
+        //memset(buffer,0,sizeof(buffer));
+        write(1,exec_args[i],bytes_read);
+        printf("\n");
+        i++;
+        
     }
+
     //close (fd);
+
+    //printf("%s\n",exec_args[2]);
+    //printf("estou aqui\n");
+    //printf("%d\n",i);
+    //write(1,&buffer,sizeof(buffer));
+    memset(buffer,0,sizeof(buffer));
+    //printf("%d\n\n",res);
+
+    for(int j=1;j<i;j++){
+        //printf("%s\n",exec_args[j]);
+        strcat(exec_args[0],exec_args[j]);
+    }
+
+    printf("%s\n",exec_args[0]);
+
+    char* string2;
+    char* args[10];
+    int k=0;
+    char *command = strdup(exec_args[0]);
+
+    while((string2=strsep(&command," "))!=NULL){
+        args[k] = string2;
+        k++;
+    }
+
+    printf("%d\n",k);
+    //printf("%s\n",exec_args[0]);
+    //memset(exec_args,0,sizeof(exec_args));
+
+    int t=0;
+
+    //ver melhor isto ??????????????????????????????
+    for (int j = k-1;j>0;j--){
+        if(k>=2){
+        args[k] = args[k+1];
+        t++;
+        }
+    }
+
+
+    //printf("\n");
+
+    for(int j=0;j<(t/2);j++){
+        if(t<=2){
+            printf("%s -> %s\n",args[0],args[1]);
+            break;
+        }
+        else if (t>=2){
+            int l=0;
+            char *exec_args2[(t/2)][2];
+            //printf("%d\n\n",t);
+            exec_args2[j][0] = args[j];
+            exec_args2[j][1] = args[j+(t/2)];
+            printf("%s -> %s\n",exec_args2[j][0],exec_args2[j][1]); 
+            l++;
+        }
+    }
+
+    memset(args,0,sizeof(args));
+    memset(exec_args,0,sizeof(exec_args));
+
 }
 return 0;
 }
