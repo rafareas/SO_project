@@ -10,12 +10,13 @@
 #include <string.h>
 
 int executaU(char* comando){        
-    int return_exec;
-    int status;
+    int return_exec, status, bytes_read;
     int k = 0;
     int i=0;
+    int fd1[2];
+    pipe(fd1);
 
-    clock_t start_t, end_t;
+    int start_t, end_t;
     double total_t;
     
     char *exec_args[20];
@@ -27,12 +28,6 @@ int executaU(char* comando){
     if(fd < 0){
         perror("Error to open fifo\n");
     }
-
-    char buffer[20];
-    char *ex = "executaU ";
-    int t = snprintf(buffer,20,"%s",ex);
-    write(1,buffer,t);
-    write(fd,buffer,t);
 
     while((string=strsep(&nova_string," "))!=NULL){
         //printf("%s\n\n",string);
@@ -49,19 +44,20 @@ int executaU(char* comando){
         perror("Erro no fork");
     }
     if(res==0){
+        close(fd1[0]);
 
         pid_t filho = getpid();
-        char buffer[20];
-        //printf("O pid é %d\n",filho);
-        int t1 = snprintf(buffer,20,"%d ",filho);
-        write(1,buffer,t1);
-        write(fd,buffer,t1);
+        char buffer[30];
+        printf("O pid é %d\n",filho);
 
         start_t = clock();
-        printf("\n%ld\n\n",start_t);
-        //int t2 = snprintf(buffer,20,"%ld ",start_t);
-        //write(1,buffer,t2);
-        //write(fd,buffer,t2);
+
+        int t2 = snprintf(buffer,30,"%d %d %s",filho,start_t,exec_args[0]);
+        write(1,buffer,t2);
+        write(fd1[1],buffer,t2);
+        printf("\n");
+
+        close(fd1[1]);
         return_exec=execvp(exec_args[0],exec_args);
         _exit(return_exec);
 
@@ -69,19 +65,53 @@ int executaU(char* comando){
 
     else{
 
-        pid_t wait_pid = wait(&status);
-        
+        close(fd1[1]);
+
         char buffer[20];
+        char *ex = "executaU";
+        pid_t wait_pid = wait(&status);
+        char * string2;
+
+        while((bytes_read = read(fd1[0],&buffer,sizeof(buffer)))>0){
+                string2 = malloc(sizeof(bytes_read));
+                memcpy(string2,buffer,bytes_read);
+                //printf("%s\n",string2);
+                memset(buffer,0,sizeof(buffer));
+        }
+
+        close(fd1[0]);
+
+        char* final;
+        char* nova_string2 = strdup(string2);
+        char *exec_args2[2];
+        i=0;
+
+        while((final=strsep(&nova_string2," "))!=NULL){
+        exec_args2[i]=final;
+        //printf("%s\n",exec_args2[i]);
+        i++;
+        }
+
+        int start = atoi(exec_args2[1]);
+        //printf("start -> %d\n",start);
+        //char buffer[20];
         end_t = clock();
-        printf("\n%ld\n\n",end_t);
-        int t = snprintf(buffer,20,"%ld ",end_t);
-        //write(1,buffer,t);
-        //write(fd,buffer,t);
+        //printf("%d\n",end_t);
+
+        double total_t = (double) (end_t-start_t) / CLOCKS_PER_SEC;
+        //printf("%f\n",total_t);
+
+        char buffer2[50];
+
+        int t2 = snprintf(buffer,50,"%s %s %d %d %f",ex,exec_args2[2],start,end_t,total_t);
+        write(1,buffer,t2);
+        write(fd,buffer,t2);
+        printf("\n");
 
         if(WIFEXITED(status)){
             printf("Pai o filho %d terminou com exit code %d\n",wait_pid,WEXITSTATUS(status));
-            
         }
+
         close(fd);
     }    
 }
