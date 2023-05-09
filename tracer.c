@@ -188,6 +188,24 @@ int executaP(char* comando){
         }    
 }
 
+int status(){
+    char buffer[20];
+    char *ex = "status";
+
+    int fd = open("fifo",O_WRONLY);
+
+    if(fd < 0){
+        perror("Error to open fifo\n");
+    }
+
+    int t = snprintf(buffer,20,"%s",ex);
+    write(fd,buffer,t);
+
+    close(fd);
+
+
+}
+
 
 int main(int argc, char **argv){
     int ret=0;
@@ -234,13 +252,8 @@ int main(int argc, char **argv){
             //printf("%f\n",total_t);
         }
     }
-    else if (strcmp(argv[1],"exit")==0){
-            //char buffer[20];
-            //char *ex = "exit ";
-            //int t = snprintf(buffer,20,"%s",ex);
-            //write(1,buffer,t);
-            //write(fd,buffer,t);
-            //close(fd);
+    else if (strcmp(argv[1],"status")==0){
+        status();        
     }
 
     //close(fd);

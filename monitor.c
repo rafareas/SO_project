@@ -17,80 +17,138 @@ typedef struct Store{
     int ti;
     int tf;
     double tt;
+    struct Store *prox;
 
-} Guarda;
-
-
-int cria(char *array[],int fd1){
-    int res;
-    Guarda a;
-    a.aux=array[0];
-    a.nome = array[1];
-    a.ti = atoi(array[2]);
-    a.tf = atoi(array[3]); 
-    char *auxiliar;
-    double result;
-
-    result= strtod(array[4],&auxiliar);
-    a.tt = result;
-
-    
-    printf("fiz o open\n");
-    lseek(fd1,0,SEEK_END);
-    write(fd1,&a,sizeof(Guarda));
-    printf("escrevi isto\n");
-    write(1,&a,sizeof(Guarda));
-    res = lseek(fd1,-sizeof(Guarda),SEEK_CUR);
-    close(fd1);
-    printf("fechei\n");
-    return (res/sizeof(Guarda));
-}
-
-void read_people() {
-
-    int fd1 = open(FILENAME,O_RDONLY,0600);
-
-    if(fd1<0){
-        perror("erro ao abri");
-    }
-
-    Guarda pessoa;
-    ssize_t bytes_read;
-
-    lseek(fd1,0,SEEK_CUR);
-
-    printf("estou aqui");
-
-    while ((bytes_read = read(fd1, &pessoa, sizeof(Guarda))) > 0) {
-        printf("entrei\n");
-        printf("%d\n",bytes_read);
-        printf("Nome: %s, Idade: %d\n", pessoa.aux, pessoa.ti);
-    }
-
-    if (bytes_read == -1) {
-        printf("Erro ao ler o arquivo!\n");
-    }
-
-    close(fd1);
-}
+};
 
 
+// int cria(char *array[],int fd1){
 
-// void insere(char *array[], guarda a) {
-//     a->aux = array[0];
-//     a->nome = array[1];
-//     a->ti = atoi(array[2]);
-//     a->tf = atoi(array[3]);
-
+//     int res;
+//     Guarda a;
+//     a.aux=array[0];
+//     //strcpy(a.aux,array[0]);
+//     a.nome = array[1];
+//     //strcpy(a.nome,array[1]);
+//     a.ti = atoi(array[2]);
+//     printf("%d\n",a.ti);
+//     a.tf = atoi(array[3]); 
 //     char *auxiliar;
 //     double result;
 
 //     result= strtod(array[4],&auxiliar);
-//     a->tt = result;
-//     a->prox = NULL;
+//     a.tt = result;
+
+    
+//     lseek(fd1,0,SEEK_END);
+//     write(fd1,&a,sizeof(Guarda));
+//     res = lseek(fd1,-sizeof(Guarda),SEEK_CUR);
+//     close(fd1);
+//     return (res/sizeof(Guarda));
 // }
 
 
+// void insere(int fd, Guarda prog) {
+
+//     off_t offset = lseek(fd, 0, SEEK_END);
+//     write(fd, &prog, sizeof(prog));
+//     printf("registo %ld\n", (offset/sizeof(prog))+1);
+//     close(fd);
+// }
+
+struct Store* cria(char* arr[],struct Store* prog){
+    prog->aux = arr[0];
+    prog->nome = arr[1];
+    prog->ti = atoi(arr[2]);
+    prog->tf = atoi(arr[3]);
+
+    char *auxiliar;
+    double result;
+
+    result= strtod(arr[4],&auxiliar);
+    prog->tt = result;
+
+    return prog;
+
+}
+
+// void read_people() {
+
+//     int fd1 = open(FILENAME,O_RDONLY,0600);
+
+//     if(fd1<0){
+//         perror("erro ao abri");
+//     }
+
+//     Guarda pessoa;
+//     ssize_t bytes_read;
+
+//     lseek(fd1,0,SEEK_SET);
+
+//     while ((bytes_read = read(fd1, &pessoa, sizeof(Guarda)))>0) {
+//         printf("entrei\n");
+//         printf("%ld\n",bytes_read);
+//         printf("Nome: %s, Idade: %d\n", pessoa.aux, pessoa.ti);
+//     }
+
+//     if (bytes_read == -1) {
+//         printf("Erro ao ler o arquivo!\n");
+//     }
+
+//     close(fd1);
+// }
+
+// void list(int fd) {
+//     Guarda p;
+    
+
+//     printf("dentro do list\n");
+
+//     lseek(fd,0,SEEK_SET);
+//     int bytes_read;
+
+//     while((bytes_read = read(fd, &p, sizeof(Guarda)))>0){
+//         printf("%d",bytes_read);
+//         printf("entrei no while\n");
+//     }
+//     printf("%s\n",p.nome);
+//     printf("passei aqui\n");
+//     close(fd);
+// }
+
+
+
+void insere(char *array[], struct Store* head) {
+     struct Store * a = (struct Store *) malloc(sizeof(struct Store));
+     a->aux = array[0];
+     a->nome = array[1];
+     a->ti = atoi(array[2]);
+     a->tf = atoi(array[3]);
+
+     char *auxiliar;
+     double result;
+
+     result= strtod(array[4],&auxiliar);
+     a->tt = result;
+     a->prox = head;
+ }
+
+
+
+void printList(struct Store* n)
+{
+    while (n != NULL) {
+        printf(" %s ", n->aux);
+        n = n->prox;
+    }
+}
+
+void print1(struct Store* n)
+{
+    while (n != NULL) {
+        printf(" %s ", n->aux);
+    }
+}
 
 int main(int argc, char ** argv){
 
@@ -102,8 +160,12 @@ int main(int argc, char ** argv){
         perror("Error to open fifo\n");
     }
 
-    int fd1 = open(FILENAME,O_CREAT | O_WRONLY,0600);
+    int fd1 = open(FILENAME,O_CREAT | O_RDWR,0600);
 
+    if(fd1 < 0){
+        perror("Error to open file\n");
+    }
+    
     int bytes_read;
     
     char buffer[50];
@@ -111,8 +173,15 @@ int main(int argc, char ** argv){
     char *exec_args[20];
     char * string;
 
+    struct Store* head=NULL;
+    struct Store* new = NULL;
+
+    head = (struct Store*) malloc(sizeof(struct Store));
+    new = (struct Store*) malloc(sizeof(struct Store));
+
     while ((bytes_read = read(fd,&buffer,sizeof(buffer)))>0){
         //write(1,&buffer,sizeof(buffer));
+
         string = malloc(bytes_read);
         
         printf("%s\n",string);
@@ -147,19 +216,35 @@ int main(int argc, char ** argv){
             printf("%s\n",array[k]);
             k++;
             }
+
         // aqui adicionar a estrutura (lista ligada) e fazer compare do primeiro elemento do array;
+        if(strcmp("executaU",array[0])==0){
+            printf("entrei no executaU\n");
 
-        cria(array,fd1);
-        close(fd1);
-        printf("criei\n");
-        read_people();
+            new = cria(array,head);
+            printf("criei a lista\n");
+            printf("%s %s\n",new->aux,new->nome);
+            //Guarda prog;
+            //prog = cria(array,prog);
+            _exit(0);
+            }
 
-        printf("------fork seguinte-----\n");
-        _exit(0);
+        else if(strcmp("status",array[0])==0){
+            close(fd);
+            close(fd1);
+            printList(head);
+
+            //list(fd1);
+            printf("sai\n");
+            unlink(FILENAME);
+            _exit(0);
+            }
+        }
+        else{
 
         }
 
-
+        //print1(new);
 
         wait(NULL);
 
@@ -170,9 +255,11 @@ int main(int argc, char ** argv){
     
     
     }
-    
-
+    //printList(head);
+    close(fd1);
     close(fd);
+    
+    
 
     memset(buffer,0,sizeof(buffer));
 
