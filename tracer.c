@@ -203,11 +203,11 @@ int status(){
    char buffer2[20];
 
 
-    while((bytes_read = read(fd1,&buffer2,sizeof(buffer)))>0){
+    while((bytes_read = read(fd1,&buffer2,sizeof(buffer2)))>0){
                 string2 = malloc(sizeof(bytes_read));
                 memcpy(string2,buffer2,bytes_read);
                 printf("%s\n",string2);
-                memset(buffer2,0,sizeof(buffer));
+                memset(buffer2,0,sizeof(buffer2));
 
         }
 
