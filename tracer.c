@@ -30,9 +30,7 @@ int executaU(char* comando){
     }
 
     while((string=strsep(&nova_string," "))!=NULL){
-        //printf("%s\n\n",string);
         exec_args[i]=string;
-        //printf("%s\n",exec_args[i]);
         i++;
     }
 
@@ -75,7 +73,6 @@ int executaU(char* comando){
         while((bytes_read = read(fd1[0],&buffer,sizeof(buffer)))>0){
                 string2 = malloc(sizeof(bytes_read));
                 memcpy(string2,buffer,bytes_read);
-                //printf("%s\n",string2);
                 memset(buffer,0,sizeof(buffer));
         }
 
@@ -88,18 +85,13 @@ int executaU(char* comando){
 
         while((final=strsep(&nova_string2," "))!=NULL){
         exec_args2[i]=final;
-        //printf("%s\n",exec_args2[i]);
         i++;
         }
 
         int start = atoi(exec_args2[1]);
-        //printf("start -> %d\n",start);
-        //char buffer[20];
         end_t = clock();
-        //printf("%d\n",end_t);
 
         double total_t = (double) (end_t-start_t) / CLOCKS_PER_SEC;
-        //printf("%f\n",total_t);
 
         char buffer2[50];
 
@@ -132,9 +124,7 @@ int executaP(char* comando){
     int return_pipe = pipe(fds);
 
     while((string=strsep(&nova_string,"|"))!=NULL){
-        //printf("%s\n\n",string);
         exec_args[i]=string;
-        //printf("%s\n",exec_args[i]);
         i++;   
     }
 
@@ -148,11 +138,9 @@ int executaP(char* comando){
         
         if(res==0){
         string2=exec_args[k];
-        //printf("%s\n",string2);
         string3 = strtok(string2," ");
         while(string3!=NULL){
             exec_args2[j]=string3;
-            //printf("%s\n",exec_args2[j]);
             string3=strtok(NULL," ");
             j++;
         }
@@ -204,36 +192,41 @@ int status(){
     close(fd);
 
 
+    int fd1 = open("fifo1",O_RDONLY);
+
+    if(fd1 < 0){
+        perror("Error to open fifo\n");
+   }
+
+   int bytes_read;
+   char * string2;
+   char buffer2[20];
+
+
+    while((bytes_read = read(fd1,&buffer2,sizeof(buffer)))>0){
+                string2 = malloc(sizeof(bytes_read));
+                memcpy(string2,buffer2,bytes_read);
+                printf("%s\n",string2);
+                memset(buffer2,0,sizeof(buffer));
+
+        }
+
+    printf("resultado %s\n",string2);
+    close(fd1);
+    return 0;
 }
 
 
 int main(int argc, char **argv){
     int ret=0;
-
-    //Inicializacao FIFO
     int create_fifo = mkfifo("fifo",0660);
-
-    //if(create_fifo < 0){
-    //    perror("Error in the creation of fifo.\n");
-    //}
-
-    //Open do file descriptor
-    //int fd = open("fifo",O_WRONLY);
-
-    //if(fd < 0){
-    //    perror("Error to open fifo\n");
-    //}
-    
+    int create_fifo1 = mkfifo("fifo1",0660);
     clock_t start_t, end_t;
     double total_t;
     if(strcmp(argv[1],"execute")==0){
         if(strcmp(argv[2],"-u")==0){
             
             char *comando = strdup(argv[3]);
-            //printf("%s\n\n",comando);
-            
-            //close(fd);
-
             start_t = clock();
             ret = executaU(comando);
             end_t = clock();
@@ -243,21 +236,12 @@ int main(int argc, char **argv){
         else if(strcmp(argv[2],"-p")==0){
             
             char *comando = strdup(argv[3]);
-            //printf("%s\n\n",comando);
-            
-            //start_t = clock();
             ret = executaP(comando);
-            //end_t = clock();
-            //total_t = (double) (end_t-start_t) / CLOCKS_PER_SEC;
-            //printf("%f\n",total_t);
         }
     }
     else if (strcmp(argv[1],"status")==0){
         status();        
     }
-
-    //close(fd);
-    //unlink("fifo");
     printf("Terminei\n");
 
     return 0;
