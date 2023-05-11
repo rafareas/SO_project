@@ -6,10 +6,39 @@
 #include <fcntl.h> /* O_RDONLY, O_WRONLY, O_CREAT, O_* */
 #include <unistd.h> /* chamadas ao sistema: defs e decls essenciais */
 #include <sys/wait.h> /* chamadas wait*() e macros relacionadas */
+#include <sys/time.h>
 #include <time.h>
 #include <string.h>
 
+#define MAX_BUFFER 50
+
+int exec_command(char * cmd){
+
+    char* args[10];
+    
+    char* string;
+    int i = 0;
+
+    char * command = strdup(cmd);
+
+    while((string=strsep(&command," "))!=NULL){
+        args[i] = string;
+        i++;
+    }
+
+    args[i] = NULL;
+
+    return execvp(args[0],args);
+
+}
+
+
+
 int executaU(char* comando){        
+    //ls -l
+    //snprintf(ls -l)
+    //ls
+    //-l
     int return_exec, status, bytes_read;
     int k = 0;
     int i=0;
@@ -18,6 +47,8 @@ int executaU(char* comando){
 
     int start_t, end_t;
     double total_t;
+
+    struct timeval start,end;
     
     char *exec_args[20];
     char *nova_string=strdup(comando);
@@ -45,15 +76,14 @@ int executaU(char* comando){
         close(fd1[0]);
 
         pid_t filho = getpid();
-        char buffer[30];
+        char buffer[MAX_BUFFER];
         printf("O pid é %d\n",filho);
 
-        start_t = clock();
+        gettimeofday(&start,NULL);
 
-        int t2 = snprintf(buffer,30,"%d %d %s",filho,start_t,exec_args[0]);
-        write(1,buffer,t2);
+        int t2 = snprintf(buffer,MAX_BUFFER,"%d %ld %ld %s",filho,start.tv_sec,start.tv_usec,comando);
+        //write(1,buffer,t2);
         write(fd1[1],buffer,t2);
-        printf("\n");
 
         close(fd1[1]);
         return_exec=execvp(exec_args[0],exec_args);
@@ -65,39 +95,43 @@ int executaU(char* comando){
 
         close(fd1[1]);
 
-        char buffer[20];
+        char buffer[MAX_BUFFER];
         char *ex = "executaU";
         pid_t wait_pid = wait(&status);
+        
+        gettimeofday(&end,NULL);
+        
         char * string2;
+        int res=0;
 
         while((bytes_read = read(fd1[0],&buffer,sizeof(buffer)))>0){
-                string2 = malloc(sizeof(bytes_read));
+                res+=bytes_read;
+                string2 = malloc(sizeof(buffer));
                 memcpy(string2,buffer,bytes_read);
                 memset(buffer,0,sizeof(buffer));
         }
 
         close(fd1[0]);
 
+
         char* final;
-        char* nova_string2 = strdup(string2);
-        char *exec_args2[2];
+        char *exec_args2[4];
         i=0;
 
-        while((final=strsep(&nova_string2," "))!=NULL){
-        exec_args2[i]=final;
-        i++;
+        while((final=strsep(&string2," "))!=NULL){
+            exec_args2[i]=final;
+            i++;
         }
 
-        int start = atoi(exec_args2[1]);
-        end_t = clock();
+        
+        long tempoi_sec = atol(exec_args2[1]);
+    
+        double result =((end.tv_usec - atol(exec_args2[2]))/1000) + ((end.tv_sec - atol(exec_args2[1]))*1000);
 
-        double total_t = (double) (end_t-start_t) / CLOCKS_PER_SEC;
-
-        char buffer2[50];
-
-        int t2 = snprintf(buffer,50,"%s %s %d %d %f",ex,exec_args2[2],start,end_t,total_t);
+        int t2 = snprintf(buffer,MAX_BUFFER,"%s %s %f %d",ex,exec_args2[3],result,atoi(exec_args2[0]));
         write(1,buffer,t2);
         write(fd,buffer,t2);
+
         printf("\n");
 
         if(WIFEXITED(status)){
@@ -110,70 +144,99 @@ int executaU(char* comando){
 
 //funciona com apenas dois programas
 int executaP(char* comando){        
-    int return_exec;
-    int status;
-    int k=0;
+
+    char* string;
+    char* nova_string = strdup(comando);
+    char **commands = (char**) malloc(sizeof(char)*2);
+
+    printf("%ld\n",sizeof(commands));
+
     int i=0;
     
-    int array_pid[20];
-    char *exec_args[20];
-    char *nova_string=strdup(comando);
-    char *string;
-
-    int fds[2];
-    int return_pipe = pipe(fds);
-
+    //rever realloc;
     while((string=strsep(&nova_string,"|"))!=NULL){
-        exec_args[i]=string;
-        i++;   
-    }
-
-    for(k=0;k<i;k++){
-        pid_t res = fork();
-        int j=0;
-        char *string2;
-        char *string3;
-        char *exec_args2[20];
-
+        commands[i]=string;
+        printf("%d\n",i);
         
-        if(res==0){
-        string2=exec_args[k];
-        string3 = strtok(string2," ");
-        while(string3!=NULL){
-            exec_args2[j]=string3;
-            string3=strtok(NULL," ");
-            j++;
+        if(i==(sizeof(commands)/4)-1){
+            printf("entrei\n");
+            commands=(char**) realloc(commands,sizeof(commands)*2);
         }
-        exec_args2[j]=NULL;
-
-        if(k==0){
-            dup2(fds[1],STDOUT_FILENO);
-            close(fds[0]);
-            close(fds[1]);
-            return_exec=execvp(exec_args2[0],exec_args2);
-            _exit(return_exec);
-        }
-        else{
-            dup2(fds[0],STDIN_FILENO);
-            close(fds[0]);
-            close(fds[1]);
-            return_exec=execvp(exec_args2[0],exec_args2);
-            _exit(return_exec);
-        }
-        }
-        else{
-            array_pid[k] = res;
-        }
+        i++;
     }
 
-    for (int l=0;l<i;l++){
-            pid_t wait_pid = waitpid(array_pid[l],&status,0);
-            if(WIFEXITED(status)){
-                printf("Pai o filho %d terminou com exit code %d\n",wait_pid,WEXITSTATUS(status));
+    printf("%d\n",i);
+
+
+    int ncommads = i;
+
+    int pipes[ncommads-1][2];
+
+    //start
+    for(int i=0 ;i<ncommads; i++){
+        
+        if(i==0){
+            //cabeça da pipeline
+            pipe(pipes[i]);
+            int fres=fork();
+            if(fres==0){
+                close(pipes[i][0]);
+                dup2(pipes[i][1],1);
+                close(pipes[i][1]);
+                //start
+                //snprintf
+
+                exec_command(commands[i]);
             }
-            close(fds[0]);
-            close(fds[1]);
-        }    
+            else{
+                //end
+                //Recebes
+                //snprintf
+                close(pipes[i][1]);
+
+            }
+        }
+        if(i==ncommads-1){
+            int fres=fork();
+            if(fres==0){
+                dup2(pipes[i-1][0],0);
+                close(pipes[i-1][0]);
+                exec_command(commands[i]);
+            }
+            else{
+                close(pipes[i-1][0]);
+            }
+        }
+        else{
+            pipe(pipes[i]);
+            int fres=fork();
+            if(fres==0){
+                dup2(pipes[i-1][0],0);
+                close(pipes[i-1][0]);
+
+                dup2(pipes[i][1],1);
+                close(pipes[i][1]);
+
+                close(pipes[i][0]);
+                exec_command(commands[i]);
+            }
+            else{
+                close(pipes[i][1]);
+                close(pipes[i-1][0]);
+            }
+
+        }
+    }
+    //end
+
+    //start - end = tempo total
+
+    for(int i=0;i<ncommads;i++){
+        wait(NULL);
+    }
+
+    printf("Pipeline terminada\n");
+    return 0;
 }
 
 int status(){
@@ -192,7 +255,7 @@ int status(){
     close(fd);
 
 
-    int fd1 = open("fifo1",O_RDONLY);
+    int fd1 = open("fifo1",O_RDONLY,0660);
 
     if(fd1 < 0){
         perror("Error to open fifo\n");
@@ -227,12 +290,10 @@ int main(int argc, char **argv){
         if(strcmp(argv[2],"-u")==0){
             
             char *comando = strdup(argv[3]);
-            start_t = clock();
+
             ret = executaU(comando);
-            end_t = clock();
-            total_t = (double) (end_t-start_t) / CLOCKS_PER_SEC;
-            printf("%f\n",total_t);
         }
+
         else if(strcmp(argv[2],"-p")==0){
             
             char *comando = strdup(argv[3]);
@@ -242,6 +303,7 @@ int main(int argc, char **argv){
     else if (strcmp(argv[1],"status")==0){
         status();        
     }
+
     printf("Terminei\n");
 
     return 0;
