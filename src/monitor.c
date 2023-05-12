@@ -10,6 +10,53 @@
 #include <math.h>
 
 
+long int stats_time(char *command){
+    long int tot = 0;
+    int i = 0;
+    char *exec_args[20];
+    char *nova_string=strdup(command);
+    char *string;
+    char *string_txt;
+
+
+    while((string=strsep(&nova_string," "))!=NULL){
+        exec_args[i]=string;
+        i++;
+    }
+  
+   
+    for(int j = 0;j < i;j++){
+        char buffer[10];
+        ssize_t bytes_read;
+
+        char *file_name = malloc(strlen(exec_args[j]) + 5);
+
+        strcpy(file_name, exec_args[j]);
+        strcat(file_name, ".txt");
+
+
+        int fd = open(file_name, O_RDONLY);
+            if (fd == -1) {
+                perror("Erro ao abrir o arquivo");
+            }
+
+        char *new_string;
+        long int aux;
+
+        while ((bytes_read = read(fd, buffer,sizeof(buffer))) > 0){
+            new_string = malloc(sizeof(buffer));
+            memcpy(new_string,buffer,bytes_read);
+            memset(buffer,0,sizeof(buffer));
+            aux = atol(new_string);
+            
+            tot += aux;
+        }  
+    }
+
+    return tot;
+}
+
+
 int main(int argc, char ** argv){
 
     int bytes_read;
@@ -62,7 +109,7 @@ int main(int argc, char ** argv){
         if(strcmp("executaU",array[0])==0){
             printf("entrei no executaU\n");
 
-            char name_pid_fd[24]; // Tamanho suficiente para armazenar a concatenação + null terminator
+            char name_pid_fd[24];
     
             strcpy(name_pid_fd, array[3]);
             strcat(name_pid_fd, ".txt");
@@ -88,7 +135,7 @@ int main(int argc, char ** argv){
         if(strcmp("executaP",array[0])==0){
             printf("entrei no executaP\n");
 
-            char name_pid_fd[24]; // Tamanho suficiente para armazenar a concatenação + null terminator
+            char name_pid_fd[24];
     
             strcpy(name_pid_fd, array[4]);
             strcat(name_pid_fd, ".txt");
@@ -158,6 +205,43 @@ int main(int argc, char ** argv){
 
             close(fd1);
             _exit(0);
+            }
+            else if(strcmp("stats-time",array[0])==0){
+                printf("entrei\n");
+                int fd2 = open("../bin/fifo2",O_RDONLY);
+
+                if(fd2 < 0){
+                    perror("Error to open fifo\n");
+                }
+
+                ssize_t bytes_read2;
+                char buffer2[50];
+                char *string2;
+                char *string_final;
+                string_final = malloc(sizeof(buffer2));
+
+                while((bytes_read2=read(fd2,&buffer2,sizeof(buffer2)))>0){
+                    string2 = malloc(sizeof(buffer2));
+                    memcpy(string2,buffer2,bytes_read2);
+                    strcat(string_final,string2);
+                    memset(buffer2,0,sizeof(buffer2));
+                }
+
+                close(fd2);
+
+                long int resultado=stats_time(string_final);
+
+                int fd3 = open("../bin/fifo2",O_WRONLY);
+
+                if(fd3 < 0){
+                    perror("Error to open fifo\n");
+                }
+
+                char buffer3[30];
+                int t2 = snprintf(buffer3,30,"%ld",resultado);
+                write(fd3,buffer3,t2);
+
+                close(fd3);
             }
         }
 

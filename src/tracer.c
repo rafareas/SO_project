@@ -41,9 +41,6 @@ int executaU(char* comando){
     int fd1[2];
     pipe(fd1);
 
-    int start_t, end_t;
-    double total_t;
-
     struct timeval start,end;
     
     char *exec_args[20];
@@ -295,49 +292,56 @@ int status(){
 }
 
 void stats_time(char *command){
-    long int tot = 0;
-    int i = 0;
-    char *exec_args[20];
-    char *nova_string=strdup(command);
-    char *string;
-    char *string_txt;
+    char *comando = strdup(command);
+    char buffer[20];
+    char *ex = "stats-time";
 
+    int fd = open("../bin/fifo",O_WRONLY);
 
-    while((string=strsep(&nova_string," "))!=NULL){
-        exec_args[i]=string;
-        i++;
+    if(fd < 0){
+        perror("Error to open fifo\n");
     }
-  
-   
-    for(int j = 0;j < i;j++){
-        char buffer[10];
-        ssize_t bytes_read;
 
-        char *file_name = malloc(strlen(exec_args[j]) + 5);
+    int t = snprintf(buffer,20,"%s",ex);
+    write(fd,buffer,t);
 
-        strcpy(file_name, exec_args[j]);
-        strcat(file_name, ".txt");
+    close(fd);
+
+    int fd1 = open("../bin/fifo2",O_WRONLY);
+
+    if(fd1 < 0){
+        perror("Error to open fifo\n");
+    }
+
+    char buffer2[30];
 
 
-        int fd = open(file_name, O_RDONLY);
-            if (fd == -1) {
-                perror("Erro ao abrir o arquivo");
-            }
+    int t1 = snprintf(buffer2,30,"%s",comando);
+    //write(1,buffer2,t1);
+    write(fd1,buffer2,t1);
+    
 
-        char *new_string;
-        long int aux;
+    close(fd1);
 
-        while ((bytes_read = read(fd, buffer,sizeof(buffer))) > 0) {
-            // Faça algo com o conteúdo lido, por exemplo, imprimir na tela
-            new_string = malloc(sizeof(buffer));
-            memcpy(new_string,buffer,bytes_read);
-            memset(buffer,0,sizeof(buffer));
-            aux = atol(new_string);
+    int fd2 = open("../bin/fifo2",O_RDONLY);
+
+    if(fd2 < 0){
+        perror("Error to open fifo\n");
+    }
+
+    char buffer3[30];
+    ssize_t bytes_read3;
+    char *new_string;
+    long int aux;
+
+    while((bytes_read3=read(fd2,&buffer3,sizeof(buffer3)))>0){
             
-            tot += aux;
-        }  
+            new_string = malloc(sizeof(buffer3));
+            memcpy(new_string,buffer3,bytes_read3);
+            memset(buffer3,0,sizeof(buffer3));
+            aux = atol(new_string);
     }
-    printf("%ld ms\n",tot);
+    printf("%ld\n",aux);
 }
 
 
@@ -361,10 +365,14 @@ int main(int argc, char **argv){
     }
     else if (strcmp(argv[1],"status")==0){
         int create_fifo1 = mkfifo("../bin/fifo1",0660);
+
         status();        
     }
     else if (strcmp(argv[1],"stats-time") == 0){
-        stats_time(argv[2]);
+        int create_fifo = mkfifo("../bin/fifo2",0660);
+
+        char *comando = strdup(argv[2]);
+        stats_time(comando);
     }
 
 
