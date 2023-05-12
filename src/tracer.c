@@ -164,6 +164,7 @@ int executaP(char* comando){
     gettimeofday(&start,NULL);
 
     pid_t pid = getpid();
+    printf("Running pid %d\n",pid);
 
     for(int i=0 ;i<ncommads; i++){
         
