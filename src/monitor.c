@@ -10,13 +10,15 @@
 #include <math.h>
 
 
-long int stats_time(char *command){
+long int stats_time(char *command,int argc){
     long int tot = 0;
     int i = 0;
     char *exec_args[20];
     char *nova_string=strdup(command);
     char *string;
     char *string_txt;
+
+    printf("cheguei aqui\n");
 
 
     while((string=strsep(&nova_string," "))!=NULL){
@@ -28,16 +30,41 @@ long int stats_time(char *command){
     for(int j = 0;j < i;j++){
         char buffer[10];
         ssize_t bytes_read;
+        int fd;
 
         char *file_name = malloc(strlen(exec_args[j]) + 5);
 
-        strcpy(file_name, exec_args[j]);
-        strcat(file_name, ".txt");
+            if(argc==1){
+                strcpy(file_name, exec_args[j]);
+                strcat(file_name, ".txt");
 
 
-        int fd = open(file_name, O_RDONLY);
-            if (fd == -1) {
-                perror("Erro ao abrir o arquivo");
+                fd = open(file_name, O_RDONLY);
+                if (fd == -1) {
+                    perror("Erro ao abrir o arquivo");
+                }
+            }
+            else if(argc==2){
+                char name_pid_fd[24];
+                char name_inter[24];
+                char path_final[24];
+                char *path = "../";
+                strcpy(path_final,path);
+                strcat(path_final,"PIDS-folder");
+                strcpy(name_pid_fd, exec_args[j]);
+                strcat(name_pid_fd, ".txt");
+                strcpy(name_inter,"/");
+                strcat(name_inter,name_pid_fd);
+                strcat(path_final,name_inter);
+
+                printf("path:%s\n",path_final);
+
+                fd = open(path_final, O_RDONLY);
+                if (fd == -1) {
+                    perror("Erro ao abrir o arquivo");
+                    return 1;
+                }
+
             }
 
         char *new_string;
@@ -100,7 +127,6 @@ int main(int argc, char ** argv){
 
         while((nova_string=strsep(&string_parte," "))!=NULL){
             array[k] = nova_string;
-            printf("%s\n",array[k]);
             k++;
             }
 
@@ -108,27 +134,58 @@ int main(int argc, char ** argv){
         
         if(strcmp("executaU",array[0])==0){
             printf("entrei no executaU\n");
+            
+            if(argc==1){
+                char name_pid_fd[24];
+            
+                strcpy(name_pid_fd, array[3]);
+                strcat(name_pid_fd, ".txt");
 
-            char name_pid_fd[24];
-    
-            strcpy(name_pid_fd, array[3]);
-            strcat(name_pid_fd, ".txt");
-
-            int fd_pid = open(name_pid_fd, O_WRONLY | O_CREAT, 0600);
-            if (fd == -1) {
-                perror("Erro ao abrir o arquivo");
-                return 1;
-            }
-
+                int fd_pid = open(name_pid_fd, O_WRONLY | O_CREAT, 0600);
+                if (fd == -1) {
+                    perror("Erro ao abrir o arquivo");
+                    return 1;
+                }
         
-            int num_bytes = write(fd_pid, array[2], strlen(array[2]));
-            if (num_bytes == -1) {
-                perror("Erro ao escrever no arquivo");
-                close(fd);
-                return 1;
-            }
+                int num_bytes = write(fd_pid, array[2], strlen(array[2]));
+                if (num_bytes == -1) {
+                    perror("Erro ao escrever no arquivo");
+                    close(fd);
+                    return 1;
+                }
 
-            close(fd_pid);
+                close(fd_pid);
+            }
+            else if(argc==2){
+                char name_pid_fd[24];
+                char name_inter[24];
+                char path_final[24];
+                char *path = "../";
+                strcpy(path_final,path);
+                strcat(path_final,argv[1]);
+                strcpy(name_pid_fd, array[3]);
+                strcat(name_pid_fd, ".txt");
+                strcpy(name_inter,"/");
+                strcat(name_inter,name_pid_fd);
+                strcat(path_final,name_inter);
+
+                printf("path:%s\n",path_final);
+
+                int fd_pid = open(path_final, O_WRONLY | O_CREAT, 0600);
+                if (fd == -1) {
+                    perror("Erro ao abrir o arquivo");
+                    return 1;
+                }
+        
+                int num_bytes = write(fd_pid, array[2], strlen(array[2]));
+                if (num_bytes == -1) {
+                    perror("Erro ao escrever no arquivo");
+                    close(fd);
+                    return 1;
+                }
+
+                close(fd_pid);
+            }
             _exit(0);
             }
         
@@ -229,7 +286,7 @@ int main(int argc, char ** argv){
 
                 close(fd2);
 
-                long int resultado=stats_time(string_final);
+                long int resultado=stats_time(string_final,argc);
 
                 int fd3 = open("../bin/fifo2",O_WRONLY);
 
