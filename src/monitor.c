@@ -21,7 +21,7 @@ int main(int argc, char ** argv){
 
     while(1){
 
-        int fd = open("fifo",O_RDONLY);
+        int fd = open("../bin/fifo",O_RDONLY);
 
         if (fd < 0){
             perror("Error to open fifo\n");
@@ -29,16 +29,17 @@ int main(int argc, char ** argv){
 
     while ((bytes_read = read(fd,&buffer,sizeof(buffer)))>0){
 
-        string = malloc(bytes_read);
-        
-        printf("%s\n",string);
+        string = malloc(sizeof(buffer));
         
         memcpy(string,buffer,bytes_read);
         memset(buffer,0,sizeof(buffer));
         exec_args[i]=string;
-        printf("%s\n",exec_args[i]);
         
         pid_t res = fork();
+
+        if(res<0){
+            perror("Error creating fork\n");
+        }
 
         if (res ==0){
         
@@ -50,11 +51,9 @@ int main(int argc, char ** argv){
 
         int k = 0;
 
-        printf("----fork novo-----\n");
-
         while((nova_string=strsep(&string_parte," "))!=NULL){
             array[k] = nova_string;
-            printf("%s\n",array[k]);
+            //printf("%s\n",array[k]);
             k++;
             }
 
@@ -63,20 +62,22 @@ int main(int argc, char ** argv){
             printf("entrei no executaU\n");
             _exit(0);
             }
+        
+        if(strcmp("executaP",array[0])==0){
+            printf("entrei no executaP\n");
+            _exit(0);
+            }
 
         else if(strcmp("status",array[0])==0){
+            printf("entrei no status\n");
 
-            int fd1 = open("fifo1",O_WRONLY,0660);
+             int fd1 = open("../bin/fifo1",O_WRONLY,0660);
 
             if(fd1 < 0){
                 perror("Error to open fifo\n");
             }
 
-
-            printf("entrei no status\n");
-            printf("%d\n",i);
-            printf("%s\n",exec_args[0]);
-            char * array2[6];
+            char * array2[5];
             char * nova_string2;
 
             for(int j = 0;j<i;j++){
@@ -84,43 +85,45 @@ int main(int argc, char ** argv){
                 int k = 0;
 
                 while((nova_string2=strsep(&exec_args[j]," "))!=NULL){
-                array2[k] = nova_string2;
-                printf("%s\n",array2[k]);
-                k++;
+                    array2[k] = nova_string2;
+                    k++;
                 }
             
                 if(strcmp("executaU",array2[0])==0){
-                    printf("entrei na criaçao\n");
-                    printf("%s\n",array2[1]);
-                    
-                    
-                    char buffer_novo[20];
-                    printf("criei o buffer\n");
+                    printf("entrei na criaçao U\n");
+                    char buffer_novo[30];
 
-                    int t1 = snprintf(buffer_novo,20,"%s %s",array2[1],array2[5]);
-                    printf("snprintf\n");
-                    write(1,buffer_novo,t1);
+                    int t1 = snprintf(buffer_novo,40,"%d %s %s ms_",atoi(array2[3]),array2[1],array2[2]);
                     write(fd1,buffer_novo,t1);
-                    printf("escrevi\n");
                 }
+                else if(strcmp("executaP",array2[0])==0 && k==5){
+                    printf("entrei na criaçao P\n");
+                    char buffer_novo[50];
 
-                printf("%d\n",j);
+                    int t1 = snprintf(buffer_novo,50,"%d %s %s %s ms_",atoi(array2[4]),array2[1],array2[2],array2[3]);
+                    write(fd1,buffer_novo,t1);
+                }
+                else if(strcmp("executaP",array2[0])==0 && k==4){
+                    printf("entrei na criaçao P\n");
+                    char buffer_novo[50];
+
+
+                    int t1 = snprintf(buffer_novo,50,"%d %s %s ms_",atoi(array2[3]),array2[1],array2[2]);
+                    write(fd1,buffer_novo,t1);
+                }
             }
 
             close(fd1);
-            printf("sai\n");
             _exit(0);
             }
         }
 
         wait(NULL);
-        printf("passei aqui\n");
         i++;
     }
     close(fd);
     }
 
-    printf("estou aqui\n");
 
     memset(buffer,0,sizeof(buffer));
     memset(exec_args,0,sizeof(exec_args));

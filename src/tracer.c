@@ -1,4 +1,16 @@
-#include "tracer.h"
+#include <sys/types.h>
+#include <sys/stat.h> 
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h> /* chamadas ao sistema: defs e decls essenciais */
+#include <fcntl.h> /* O_RDONLY, O_WRONLY, O_CREAT, O_* */
+#include <unistd.h> /* chamadas ao sistema: defs e decls essenciais */
+#include <sys/wait.h> /* chamadas wait*() e macros relacionadas */
+#include <sys/time.h>
+#include <time.h>
+#include <string.h>
+
+#define MAX_BUFFER 50
 
 int exec_command(char * cmd){
 
@@ -23,10 +35,6 @@ int exec_command(char * cmd){
 
 
 int executaU(char* comando){        
-    //ls -l
-    //snprintf(ls -l)
-    //ls
-    //-l
     int return_exec, status, bytes_read;
     int k = 0;
     int i=0;
@@ -42,7 +50,7 @@ int executaU(char* comando){
     char *nova_string=strdup(comando);
     char *string;
 
-    int fd = open("fifo",O_WRONLY);
+    int fd = open("../bin/fifo",O_WRONLY);
 
     if(fd < 0){
         perror("Error to open fifo\n");
@@ -65,12 +73,11 @@ int executaU(char* comando){
 
         pid_t filho = getpid();
         char buffer[MAX_BUFFER];
-        printf("O pid é %d\n",filho);
+        printf("Running pid %d\n",filho);
 
         gettimeofday(&start,NULL);
 
         int t2 = snprintf(buffer,MAX_BUFFER,"%d %ld %ld %s",filho,start.tv_sec,start.tv_usec,comando);
-        //write(1,buffer,t2);
         write(fd1[1],buffer,t2);
 
         close(fd1[1]);
@@ -106,7 +113,7 @@ int executaU(char* comando){
         char *exec_args2[4];
         i=0;
 
-        while((final=strsep(&string2," "))!=NULL){
+        while((final=strsep(&string2," "))!=NULL && i<4){
             exec_args2[i]=final;
             i++;
         }
@@ -114,13 +121,12 @@ int executaU(char* comando){
         
         long tempoi_sec = atol(exec_args2[1]);
     
-        double result =((end.tv_usec - atol(exec_args2[2]))/1000) + ((end.tv_sec - atol(exec_args2[1]))*1000);
+        long result =((end.tv_usec - atol(exec_args2[2]))/1000) + ((end.tv_sec - atol(exec_args2[1]))*1000);
 
-        int t2 = snprintf(buffer,MAX_BUFFER,"%s %s %f %d",ex,exec_args2[3],result,atoi(exec_args2[0]));
-        write(1,buffer,t2);
+        int t2 = snprintf(buffer,MAX_BUFFER,"%s %s %ld %d",ex,exec_args2[3],result,atoi(exec_args2[0]));
         write(fd,buffer,t2);
+        printf("Ended in %ld\n",result);
 
-        printf("\n");
 
         if(WIFEXITED(status)){
             printf("Pai o filho %d terminou com exit code %d\n",wait_pid,WEXITSTATUS(status));
@@ -130,56 +136,50 @@ int executaU(char* comando){
     }    
 }
 
-//funciona com apenas dois programas
 int executaP(char* comando){        
 
     char* string;
     char* nova_string = strdup(comando);
-    char **commands = (char**) malloc(sizeof(char)*2);
-
-    printf("%ld\n",sizeof(commands));
+    char *commands[20];
 
     int i=0;
     
-    //rever realloc;
+    struct timeval end,start;
+
     while((string=strsep(&nova_string,"|"))!=NULL){
         commands[i]=string;
-        printf("%d\n",i);
-        
-        if(i==(sizeof(commands)/4)-1){
-            printf("entrei\n");
-            commands=(char**) realloc(commands,sizeof(commands)*2);
-        }
         i++;
     }
 
-    printf("%d\n",i);
+    int fd = open("../bin/fifo",O_WRONLY);
+
+    if(fd < 0){
+        perror("Error to open fifo\n");
+    }
 
 
     int ncommads = i;
 
     int pipes[ncommads-1][2];
 
-    //start
+
+    gettimeofday(&start,NULL);
+
+    pid_t pid = getpid();
+
     for(int i=0 ;i<ncommads; i++){
         
         if(i==0){
-            //cabeça da pipeline
             pipe(pipes[i]);
             int fres=fork();
             if(fres==0){
+                close(fd);
                 close(pipes[i][0]);
                 dup2(pipes[i][1],1);
                 close(pipes[i][1]);
-                //start
-                //snprintf
-
                 exec_command(commands[i]);
             }
             else{
-                //end
-                //Recebes
-                //snprintf
                 close(pipes[i][1]);
 
             }
@@ -187,6 +187,7 @@ int executaP(char* comando){
         if(i==ncommads-1){
             int fres=fork();
             if(fres==0){
+                close(fd);
                 dup2(pipes[i-1][0],0);
                 close(pipes[i-1][0]);
                 exec_command(commands[i]);
@@ -199,6 +200,7 @@ int executaP(char* comando){
             pipe(pipes[i]);
             int fres=fork();
             if(fres==0){
+                close(fd);
                 dup2(pipes[i-1][0],0);
                 close(pipes[i-1][0]);
 
@@ -215,13 +217,21 @@ int executaP(char* comando){
 
         }
     }
-    //end
-
-    //start - end = tempo total
 
     for(int i=0;i<ncommads;i++){
         wait(NULL);
     }
+
+    gettimeofday(&end,NULL);
+    long result =((end.tv_usec - start.tv_usec)/1000) + ((end.tv_sec - start.tv_sec)*1000);
+    printf("Ended in %ld\n",result);
+
+    char buffer[50];
+    char *ex = "executaP";
+    int t = snprintf(buffer,50,"%s %s %ld %d",ex,comando,result,pid);
+    write(fd,buffer,t);
+
+    close(fd);
 
     printf("Pipeline terminada\n");
     return 0;
@@ -231,7 +241,7 @@ int status(){
     char buffer[20];
     char *ex = "status";
 
-    int fd = open("fifo",O_WRONLY);
+    int fd = open("../bin/fifo",O_WRONLY);
 
     if(fd < 0){
         perror("Error to open fifo\n");
@@ -243,7 +253,7 @@ int status(){
     close(fd);
 
 
-    int fd1 = open("fifo1",O_RDONLY,0660);
+    int fd1 = open("../bin/fifo1",O_RDONLY,0660);
 
     if(fd1 < 0){
         perror("Error to open fifo\n");
@@ -251,27 +261,41 @@ int status(){
 
    int bytes_read;
    char * string2;
-   char buffer2[20];
+   
+   char buffer2[512];
+   char *string_final;
+   string_final = malloc(sizeof(buffer2));
+   char* exec_args[50];
+   int i =0;
 
 
     while((bytes_read = read(fd1,&buffer2,sizeof(buffer2)))>0){
-                string2 = malloc(sizeof(bytes_read));
+                string2 = malloc(sizeof(buffer2));
                 memcpy(string2,buffer2,bytes_read);
-                printf("%s\n",string2);
+                strcat(string_final,string2);
                 memset(buffer2,0,sizeof(buffer2));
-
+                i++;
         }
 
-    printf("resultado %s\n",string2);
+
+    char* nova_string;
+    char* exec_args2[50];
+    int k=0;
+
+    while((nova_string=strsep(&string_final,"_"))!=NULL){
+        exec_args2[i]=nova_string;
+        printf("%s\n",exec_args2[i]);
+        k++;
+    }
+
+
     close(fd1);
     return 0;
 }
 
-
 int main(int argc, char **argv){
     int ret=0;
-    int create_fifo = mkfifo("fifo",0660);
-    int create_fifo1 = mkfifo("fifo1",0660);
+    int create_fifo = mkfifo("../bin/fifo",0660);
     clock_t start_t, end_t;
     double total_t;
     if(strcmp(argv[1],"execute")==0){
@@ -289,10 +313,10 @@ int main(int argc, char **argv){
         }
     }
     else if (strcmp(argv[1],"status")==0){
+        int create_fifo1 = mkfifo("../bin/fifo1",0660);
         status();        
     }
 
-    printf("Terminei\n");
 
     return 0;
 }
