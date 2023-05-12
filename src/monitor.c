@@ -53,18 +53,61 @@ int main(int argc, char ** argv){
 
         while((nova_string=strsep(&string_parte," "))!=NULL){
             array[k] = nova_string;
-            //printf("%s\n",array[k]);
+            printf("%s\n",array[k]);
             k++;
             }
 
         
+        
         if(strcmp("executaU",array[0])==0){
             printf("entrei no executaU\n");
+
+            char name_pid_fd[24]; // Tamanho suficiente para armazenar a concatenação + null terminator
+    
+            strcpy(name_pid_fd, array[3]);
+            strcat(name_pid_fd, ".txt");
+
+            int fd_pid = open(name_pid_fd, O_WRONLY | O_CREAT, 0600);
+            if (fd == -1) {
+                perror("Erro ao abrir o arquivo");
+                return 1;
+            }
+
+        
+            int num_bytes = write(fd_pid, array[2], strlen(array[2]));
+            if (num_bytes == -1) {
+                perror("Erro ao escrever no arquivo");
+                close(fd);
+                return 1;
+            }
+
+            close(fd_pid);
             _exit(0);
             }
         
         if(strcmp("executaP",array[0])==0){
             printf("entrei no executaP\n");
+
+            char name_pid_fd[24]; // Tamanho suficiente para armazenar a concatenação + null terminator
+    
+            strcpy(name_pid_fd, array[4]);
+            strcat(name_pid_fd, ".txt");
+
+            int fd_pid = open(name_pid_fd, O_WRONLY | O_CREAT, 0600);
+            if (fd == -1) {
+                perror("Erro ao abrir o arquivo");
+                return 1;
+            }
+
+        
+            int num_bytes = write(fd_pid, array[3], strlen(array[3]));
+            if (num_bytes == -1) {
+                perror("Erro ao escrever no arquivo");
+                close(fd);
+                return 1;
+            }
+
+            close(fd_pid);
             _exit(0);
             }
 

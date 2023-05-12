@@ -133,7 +133,8 @@ int executaU(char* comando){
         }
 
         close(fd);
-    }    
+    }
+    return 0;
 }
 
 int executaP(char* comando){        
@@ -293,11 +294,57 @@ int status(){
     return 0;
 }
 
+void stats_time(char *command){
+    long int tot = 0;
+    int i = 0;
+    char *exec_args[20];
+    char *nova_string=strdup(command);
+    char *string;
+    char *string_txt;
+
+
+    while((string=strsep(&nova_string," "))!=NULL){
+        exec_args[i]=string;
+        i++;
+    }
+  
+   
+    for(int j = 0;j < i;j++){
+        char buffer[10];
+        ssize_t bytes_read;
+
+        char *file_name = malloc(strlen(exec_args[j]) + 5);
+
+        strcpy(file_name, exec_args[j]);
+        strcat(file_name, ".txt");
+
+
+        int fd = open(file_name, O_RDONLY);
+            if (fd == -1) {
+                perror("Erro ao abrir o arquivo");
+            }
+
+        char *new_string;
+        long int aux;
+
+        while ((bytes_read = read(fd, buffer,sizeof(buffer))) > 0) {
+            // Faça algo com o conteúdo lido, por exemplo, imprimir na tela
+            new_string = malloc(sizeof(buffer));
+            memcpy(new_string,buffer,bytes_read);
+            memset(buffer,0,sizeof(buffer));
+            aux = atol(new_string);
+            
+            tot += aux;
+        }  
+    }
+    printf("%ld ms\n",tot);
+}
+
+
 int main(int argc, char **argv){
     int ret=0;
     int create_fifo = mkfifo("../bin/fifo",0660);
-    clock_t start_t, end_t;
-    double total_t;
+
     if(strcmp(argv[1],"execute")==0){
         if(strcmp(argv[2],"-u")==0){
             
@@ -315,6 +362,9 @@ int main(int argc, char **argv){
     else if (strcmp(argv[1],"status")==0){
         int create_fifo1 = mkfifo("../bin/fifo1",0660);
         status();        
+    }
+    else if (strcmp(argv[1],"stats-time") == 0){
+        stats_time(argv[2]);
     }
 
 
