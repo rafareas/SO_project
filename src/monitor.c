@@ -96,7 +96,7 @@ long int stats_time(char *command,int argc){
     return tot;
 }
 
-char* stats_uniq(char *command,int argc){
+void stats_uniq(char *command,int argc){
     long int tot = 0;
     int i = 0;
     char *exec_args[20];
@@ -142,7 +142,7 @@ char* stats_uniq(char *command,int argc){
                 strcat(name_inter,name_pid_fd);
                 strcat(path_final,name_inter);
 
-
+                printf("path final:%s",path_final);
                 fd = open(path_final, O_RDONLY);
                 if (fd == -1) {
                     perror("Erro ao abrir o arquivo");
@@ -170,8 +170,8 @@ char* stats_uniq(char *command,int argc){
         int k =0;
         char *string_final;
 
-        while((string_final=strsep(&new_string,"_"))!=NULL){
-            array[k] = string_final;
+        while((nova_string=strsep(&new_string,"_"))!=NULL){
+            array[k] = nova_string;
             printf("%s\n",array[k]);
             k++;
             }
@@ -186,13 +186,11 @@ char* stats_uniq(char *command,int argc){
         char buffer2[20];
 
         int t2 = snprintf(buffer2,20,"%s_",array[0]);
-        write(1,buffer2,t2);
         write(fd3,buffer2,t2);
 
         close(fd3);
         }
     }
-    return final;
 }
 
 int stats_command(char *comando1,char *comando2,int argc){
@@ -246,7 +244,6 @@ int stats_command(char *comando1,char *comando2,int argc){
                 fd = open(path_final, O_RDONLY);
                 if (fd == -1) {
                     perror("Erro ao abrir o arquivo");
-                    return 1;
                 }
 
             }
@@ -279,8 +276,6 @@ int stats_command(char *comando1,char *comando2,int argc){
         if(strcmp(compare,array[0])==0){
             tot++;
         }
-
-        free(new_string);
         }
     }
     return tot;
