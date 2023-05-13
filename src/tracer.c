@@ -345,6 +345,122 @@ void stats_time(char *command){
     printf("%ld\n",aux);
 }
 
+void stats_uniq(char *command){
+    char *comando = strdup(command);
+    char buffer[20];
+    char *ex = "stats-uniq";
+
+    int fd = open("../bin/fifo",O_WRONLY);
+
+    if(fd < 0){
+        perror("Error to open fifo\n");
+    }
+
+    int t = snprintf(buffer,20,"%s",ex);
+    write(fd,buffer,t);
+
+    close(fd);
+
+    int fd1 = open("../bin/fifo3",O_WRONLY);
+
+    if(fd1 < 0){
+        perror("Error to open fifo\n");
+    }
+
+    char buffer2[30];
+
+
+    int t1 = snprintf(buffer2,30,"%s",comando);
+    //write(1,buffer2,t1);
+    write(fd1,buffer2,t1);
+    
+
+    close(fd1);
+
+    int fd2 = open("../bin/fifo3",O_RDONLY);
+
+    if(fd2 < 0){
+        perror("Error to open fifo\n");
+    }
+
+    char buffer3[30];
+    ssize_t bytes_read3;
+    char *new_string;
+    long int aux;
+    char *string_final;
+    string_final = malloc(sizeof(buffer2));
+
+    while((bytes_read3=read(fd2,&buffer3,sizeof(buffer3)))>0){
+            
+            new_string = malloc(sizeof(buffer3));
+            memcpy(new_string,buffer3,bytes_read3);
+            strcat(string_final,new_string);
+            memset(buffer3,0,sizeof(buffer3));
+    }
+    int i = 0;
+
+    char *nova_string;
+    char *array[20];
+
+    while((nova_string=strsep(&string_final,"_"))!=NULL){
+            array[i] = nova_string;
+            printf("%s\n",array[i]);
+            i++;
+    }
+}
+
+void stats_command(char *comando1,char* comando2){
+    char *comando = strdup(comando1);
+    char *scomando = strdup(comando2);
+    char buffer[20];
+    char *ex = "stats-command";
+
+    int fd = open("../bin/fifo",O_WRONLY);
+
+    if(fd < 0){
+        perror("Error to open fifo\n");
+    }
+
+    int t = snprintf(buffer,20,"%s",ex);
+    write(fd,buffer,t);
+
+    close(fd);
+
+    int fd1 = open("../bin/fifo4",O_WRONLY);
+
+    if(fd1 < 0){
+        perror("Error to open fifo\n");
+    }
+
+    char buffer2[30];
+
+
+    int t1 = snprintf(buffer2,30,"%s_%s",comando,scomando);
+    //write(1,buffer2,t1);
+    write(fd1,buffer2,t1);
+    
+
+    close(fd1);
+
+    int fd2 = open("../bin/fifo4",O_RDONLY);
+
+    if(fd2 < 0){
+        perror("Error to open fifo\n");
+    }
+
+    char buffer3[30];
+    ssize_t bytes_read3;
+    char *new_string;
+    int aux;
+
+    while((bytes_read3=read(fd2,&buffer3,sizeof(buffer3)))>0){
+            new_string = malloc(sizeof(buffer3));
+            memcpy(new_string,buffer3,bytes_read3);
+            memset(buffer3,0,sizeof(buffer3));
+            aux = atoi(new_string);
+    }
+    printf("%s was executed %d times\n",comando,aux);
+}
 
 int main(int argc, char **argv){
     int ret=0;
@@ -374,6 +490,20 @@ int main(int argc, char **argv){
 
         char *comando = strdup(argv[2]);
         stats_time(comando);
+    }
+    else if (strcmp(argv[1],"stats-uniq")==0){
+        int create_fifo = mkfifo("../bin/fifo3",0660);
+
+        char *comando = strdup(argv[2]);
+        stats_uniq(comando);
+    }
+    else if(strcmp(argv[1],"stats-command")==0){
+        int create_fifo = mkfifo("../bin/fifo4",0660);
+
+        char *comando1 = strdup(argv[2]);
+        char *comando2 = strdup(argv[3]); 
+        stats_command(comando1,comando2);
+
     }
 
 

@@ -74,15 +74,205 @@ long int stats_time(char *command,int argc){
             new_string = malloc(sizeof(buffer));
             memcpy(new_string,buffer,bytes_read);
             memset(buffer,0,sizeof(buffer));
-            aux = atol(new_string);
+            //aux = atol(new_string);
             
-            tot += aux;
-        }  
+            //tot += aux;
+        }
+        char* string_final;
+        char* array[3];
+        int k =0;
+
+        while((nova_string=strsep(&new_string,"_"))!=NULL){
+            array[k] = nova_string;
+            printf("%s\n",array[k]);
+            k++;
+            }
+        aux = atol(array[1]);
+        tot+=aux;
+
     }
 
     return tot;
 }
 
+void stats_uniq(char *command,int argc){
+    long int tot = 0;
+    int i = 0;
+    char *exec_args[20];
+    char *nova_string=strdup(command);
+    char *string;
+    char *string_txt;
+
+    printf("cheguei aqui\n");
+
+
+    while((string=strsep(&nova_string," "))!=NULL){
+        exec_args[i]=string;
+        i++;
+    }
+  
+    char* string_final;
+
+    for(int j = 0;j < i;j++){
+        char buffer[10];
+        ssize_t bytes_read;
+        int fd;
+
+        char *file_name = malloc(strlen(exec_args[j]) + 5);
+
+            if(argc==1){
+                strcpy(file_name, exec_args[j]);
+                strcat(file_name, ".txt");
+
+
+                fd = open(file_name, O_RDONLY);
+                if (fd == -1) {
+                    perror("Erro ao abrir o arquivo");
+                }
+            }
+            else if(argc==2){
+                char name_pid_fd[24];
+                char name_inter[24];
+                char path_final[24];
+                char *path = "../";
+                strcpy(path_final,path);
+                strcat(path_final,"PIDS-folder");
+                strcpy(name_pid_fd, exec_args[j]);
+                strcat(name_pid_fd, ".txt");
+                strcpy(name_inter,"/");
+                strcat(name_inter,name_pid_fd);
+                strcat(path_final,name_inter);
+
+                printf("path:%s\n",path_final);
+
+                fd = open(path_final, O_RDONLY);
+                if (fd == -1) {
+                    perror("Erro ao abrir o arquivo");
+                    return 1;
+                }
+
+            }
+
+        char *new_string;
+        long int aux;
+
+        while ((bytes_read = read(fd, buffer,sizeof(buffer))) > 0){
+            new_string = malloc(sizeof(buffer));
+            memcpy(new_string,buffer,bytes_read);
+            memset(buffer,0,sizeof(buffer));
+        }
+
+        
+        char* array[3];
+        int k =0;
+
+        while((nova_string=strsep(&new_string,"_"))!=NULL){
+            array[k] = nova_string;
+            printf("%s\n",array[k]);
+            k++;
+            }
+        
+
+        int fd3 = open("../bin/fifo3",O_WRONLY);
+
+        if(fd3 < 0){
+          perror("Error to open fifo\n"); 
+        }
+
+        char buffer2[10];
+
+        int t2 = snprintf(buffer2,10,"%s_",array[0]);
+        write(fd3,buffer2,t2);
+
+        close(fd3);
+    }
+}
+
+int stats_command(char *comando1,char *comando2,int argc){
+    int tot = 0;
+    int i = 0;
+    char *exec_args[20];
+    char *compare = strdup(comando1);
+    char *nova_string=strdup(comando2);
+    char *string;
+    char *string_txt;
+
+    printf("cheguei aqui\n");
+
+
+    while((string=strsep(&nova_string," "))!=NULL){
+        exec_args[i]=string;
+        i++;
+    }
+  
+    char* string_final;
+
+    for(int j = 0;j < i;j++){
+        char buffer[10];
+        ssize_t bytes_read;
+        int fd;
+
+        char *file_name = malloc(strlen(exec_args[j]) + 5);
+
+            if(argc==1){
+                strcpy(file_name, exec_args[j]);
+                strcat(file_name, ".txt");
+
+
+                fd = open(file_name, O_RDONLY);
+                if (fd == -1) {
+                    perror("Erro ao abrir o arquivo");
+                }
+            }
+            else if(argc==2){
+                char name_pid_fd[24];
+                char name_inter[24];
+                char path_final[24];
+                char *path = "../";
+                strcpy(path_final,path);
+                strcat(path_final,"PIDS-folder");
+                strcpy(name_pid_fd, exec_args[j]);
+                strcat(name_pid_fd, ".txt");
+                strcpy(name_inter,"/");
+                strcat(name_inter,name_pid_fd);
+                strcat(path_final,name_inter);
+
+                printf("path:%s\n",path_final);
+
+                fd = open(path_final, O_RDONLY);
+                if (fd == -1) {
+                    perror("Erro ao abrir o arquivo");
+                    return 1;
+                }
+
+            }
+
+        char *new_string;
+        long int aux;
+
+        while ((bytes_read = read(fd, buffer,sizeof(buffer))) > 0){
+            new_string = malloc(sizeof(buffer));
+            memcpy(new_string,buffer,bytes_read);
+            memset(buffer,0,sizeof(buffer));
+        }
+
+        
+        char* array[3];
+        int k =0;
+
+        while((nova_string=strsep(&new_string,"_"))!=NULL){
+            array[k] = nova_string;
+            printf("%s\n",array[k]);
+            k++;
+            }
+        
+        if(strcmp(compare,array[0])==0){
+            tot++;
+        }
+        
+    }
+    return tot;
+}
 
 int main(int argc, char ** argv){
 
@@ -127,10 +317,9 @@ int main(int argc, char ** argv){
 
         while((nova_string=strsep(&string_parte," "))!=NULL){
             array[k] = nova_string;
+            printf("%s\n",array[k]);
             k++;
             }
-
-        
         
         if(strcmp("executaU",array[0])==0){
             printf("entrei no executaU\n");
@@ -146,8 +335,17 @@ int main(int argc, char ** argv){
                     perror("Erro ao abrir o arquivo");
                     return 1;
                 }
+
+                char escreve_ficheiro[20];
+                char escreve_ficheiroF[20];
+                strcpy(escreve_ficheiroF,array[1]);
+                strcat(escreve_ficheiroF,"_");
+                strcpy(escreve_ficheiro,array[2]);
+                strcat(escreve_ficheiroF,escreve_ficheiro);
+
+
         
-                int num_bytes = write(fd_pid, array[2], strlen(array[2]));
+                int num_bytes = write(fd_pid, &escreve_ficheiroF, strlen(escreve_ficheiroF));
                 if (num_bytes == -1) {
                     perror("Erro ao escrever no arquivo");
                     close(fd);
@@ -299,6 +497,85 @@ int main(int argc, char ** argv){
                 write(fd3,buffer3,t2);
 
                 close(fd3);
+            }
+
+            else if(strcmp("stats-uniq",array[0])==0){
+                printf("entrei\n");
+                int fd2 = open("../bin/fifo3",O_RDONLY);
+
+                if(fd2 < 0){
+                    perror("Error to open fifo\n");
+                }
+
+                ssize_t bytes_read2;
+                char buffer2[50];
+                char *string2;
+                char *string_final;
+                string_final = malloc(sizeof(buffer2));
+
+                while((bytes_read2=read(fd2,&buffer2,sizeof(buffer2)))>0){
+                    string2 = malloc(sizeof(buffer2));
+                    memcpy(string2,buffer2,bytes_read2);
+                    strcat(string_final,string2);
+                    memset(buffer2,0,sizeof(buffer2));
+                }
+
+                close(fd2);
+
+                stats_uniq(string_final,argc);
+
+            }
+            else if(strcmp("stats-command",array[0])==0){
+                printf("entrei\n");
+                int fd2 = open("../bin/fifo4",O_RDONLY);
+
+                if(fd2 < 0){
+                    perror("Error to open fifo\n");
+                }
+
+                ssize_t bytes_read2;
+                char buffer2[50];
+                char *string2;
+                char *string_final;
+                string_final = malloc(sizeof(buffer2));
+
+                while((bytes_read2=read(fd2,&buffer2,sizeof(buffer2)))>0){
+                    string2 = malloc(sizeof(buffer2));
+                    memcpy(string2,buffer2,bytes_read2);
+                    strcat(string_final,string2);
+                    memset(buffer2,0,sizeof(buffer2));
+                }
+                close(fd2);
+                //parsing
+                printf("string final : %s\n",string_final);
+                printf("a entrar no parsing\n");
+                int j =0;
+                char *string_statsC;
+                char *arraySC[2];
+
+                while((string_statsC=strsep(&string_final,"_"))!=NULL){
+                    array[j] = string_statsC;
+                    printf("%s\n",array[j]);
+                    j++;
+                }
+
+                printf("resultados\n"),
+                printf("%s %s",array[0],array[1]);
+                int resultado = stats_command(array[0],array[1],argc);
+
+                int fd3 = open("../bin/fifo4",O_WRONLY);
+
+                if(fd3 < 0){
+                    perror("Error to open fifo\n"); 
+                }
+
+                char buffer3[10];
+
+                int t2 = snprintf(buffer3,10,"%d",resultado);
+                write(fd3,buffer3,t2);
+
+                close(fd3);
+
             }
         }
 
