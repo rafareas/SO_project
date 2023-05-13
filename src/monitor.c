@@ -16,6 +16,7 @@ long int stats_time(char *command,int argc){
 
     for(int j = 0;j < i;j++){
         char *new_string;
+        char *string_final;
         char buffer[10];
         ssize_t bytes_read;
         long int aux;
@@ -31,7 +32,7 @@ long int stats_time(char *command,int argc){
 
                 fd = open(file_name, O_RDONLY);
                 if (fd == -1) {
-                    perror("Erro ao abrir o arquivo");
+                    perror("Erro ao abrir o ficheiro\n");
                 }
             }
             else if(argc==2){
@@ -49,14 +50,18 @@ long int stats_time(char *command,int argc){
 
                 fd = open(path_final, O_RDONLY);
                 if (fd == -1) {
-                    perror("Erro ao abrir o arquivo");
+                    perror("Erro ao abrir o ficheiro\n");
                 }
 
             }
         
+        
+        string_final = malloc(sizeof(buffer));
+        
         while ((bytes_read = read(fd, buffer,sizeof(buffer))) > 0){
             new_string = malloc(sizeof(buffer));
             memcpy(new_string,buffer,bytes_read);
+            strcat(string_final,new_string);
             memset(buffer,0,sizeof(buffer));
             t++;
         }
@@ -65,12 +70,12 @@ long int stats_time(char *command,int argc){
 
         close(fd);
 
-        char* string_final;
+        char* string_aux;
         char* array[3];
         int k =0;
 
-        while((nova_string=strsep(&new_string,"_"))!=NULL){
-            array[k] = nova_string;
+        while((string_aux=strsep(&string_final,"_"))!=NULL){
+            array[k] = string_aux;
             k++;
             }
         aux = atol(array[1]);
@@ -96,6 +101,7 @@ void stats_uniq(char *command,int argc){
 
     for(int j = 0;j < i;j++){
         char *new_string;
+        char *string_final;
         char buffer[20];
         ssize_t bytes_read;
         int fd;
@@ -111,7 +117,7 @@ void stats_uniq(char *command,int argc){
 
                 fd = open(file_name, O_RDONLY);
                 if (fd == -1) {
-                    perror("Erro ao abrir o arquivo");
+                    perror("Erro ao abrir o ficheiro\n");
                 }
             }
             else if(argc==2){
@@ -129,14 +135,18 @@ void stats_uniq(char *command,int argc){
 
                 fd = open(path_final, O_RDONLY);
                 if (fd == -1) {
-                    perror("Erro ao abrir o arquivo");
+                    perror("Erro ao abrir o ficheiro\n");
                 }
 
             }
         
+        
+        string_final = malloc(sizeof(buffer));
+
         while ((bytes_read = read(fd, buffer,sizeof(buffer))) > 0){
             new_string = malloc(sizeof(buffer));
             memcpy(new_string,buffer,bytes_read);
+            strcat(string_final,new_string);
             memset(buffer,0,sizeof(buffer));
             t++;
         }
@@ -147,10 +157,10 @@ void stats_uniq(char *command,int argc){
 
         char* array[3];
         int k =0;
-        char *string_final;
+        char *string_aux;
 
-        while((nova_string=strsep(&new_string,"_"))!=NULL){
-            array[k] = nova_string;
+        while((string_aux=strsep(&string_final,"_"))!=NULL){
+            array[k] = string_aux;
             k++;
             }
 
@@ -186,6 +196,7 @@ int stats_command(char *comando1,char *comando2,int argc){
 
     for(int j = 0;j < i;j++){
         char *new_string;
+        char *string_final;
         char buffer[10];
         ssize_t bytes_read;
         long int aux;
@@ -201,7 +212,7 @@ int stats_command(char *comando1,char *comando2,int argc){
 
                 fd = open(file_name, O_RDONLY);
                 if (fd == -1) {
-                    perror("Erro ao abrir o arquivo");
+                    perror("Erro ao abrir o ficheiro\n");
                 }
             }
             else if(argc==2){
@@ -219,14 +230,18 @@ int stats_command(char *comando1,char *comando2,int argc){
 
                 fd = open(path_final, O_RDONLY);
                 if (fd == -1) {
-                    perror("Erro ao abrir o arquivo");
+                    perror("Erro ao abrir o ficheiro\n");
                 }
 
             }
+        
+        
+        string_final = malloc(sizeof(buffer));
 
         while ((bytes_read = read(fd, buffer,sizeof(buffer))) > 0){
             new_string = malloc(sizeof(buffer));
             memcpy(new_string,buffer,bytes_read);
+            strcat(string_final,new_string);
             memset(buffer,0,sizeof(buffer));
             t++;
         }
@@ -237,12 +252,13 @@ int stats_command(char *comando1,char *comando2,int argc){
         
         char* array[2];
         int k =0;
+        char *string_aux;
 
-        while((nova_string=strsep(&new_string,"_"))!=NULL){
-            array[k] = nova_string;
+        while((string_aux=strsep(&string_final,"_"))!=NULL){
+            array[k] = string_aux;
             k++;
             }
-        
+
         if(strcmp(compare,array[0])==0){
             tot++;
         }
@@ -278,10 +294,10 @@ int main(int argc, char ** argv){
         pid_t res = fork();
 
         if(res<0){
-            perror("Error creating fork\n");
+            perror("Error ao criar o fork\n");
         }
 
-        if (res ==0){
+        if (res==0){
         
         close(fd);
 
@@ -307,8 +323,7 @@ int main(int argc, char ** argv){
 
                 int fd_pid = open(name_pid_fd, O_WRONLY | O_CREAT, 0600);
                 if (fd == -1) {
-                    perror("Erro ao abrir o arquivo");
-                    return 1;
+                    perror("Erro ao abrir o ficheiro\n");
                 }
 
                 char escreve_ficheiro[20];
@@ -320,9 +335,8 @@ int main(int argc, char ** argv){
         
                 int num_bytes = write(fd_pid, &escreve_ficheiroF, strlen(escreve_ficheiroF));
                 if (num_bytes == -1) {
-                    perror("Erro ao escrever no arquivo");
+                    perror("Erro ao escrever no ficheiro\n");
                     close(fd);
-                    return 1;
                 }
 
                 close(fd_pid);
@@ -342,7 +356,7 @@ int main(int argc, char ** argv){
 
                 int fd_pid = open(path_final, O_WRONLY | O_CREAT, 0600);
                 if (fd == -1) {
-                    perror("Erro ao abrir o arquivo");
+                    perror("Erro ao abrir o ficheiro\n");
                     return 1;
                 }
 
@@ -355,7 +369,7 @@ int main(int argc, char ** argv){
         
                 int num_bytes = write(fd_pid, &escreve_ficheiroF, strlen(escreve_ficheiroF));
                 if (num_bytes == -1) {
-                    perror("Erro ao escrever no arquivo");
+                    perror("Erro ao escrever no ficheiro\n");
                     close(fd);
                     return 1;
                 }
@@ -382,7 +396,7 @@ int main(int argc, char ** argv){
 
                 fd_pid = open(name_pid_fd, O_WRONLY | O_CREAT, 0600);
                 if (fd == -1) {
-                    perror("Erro ao abrir o arquivo");
+                    perror("Erro ao abrir o ficheiro\n");
                     return 1;
                 }
 
@@ -398,7 +412,7 @@ int main(int argc, char ** argv){
         
                 int num_bytes = write(fd_pid, &escreve_ficheiroF, strlen(escreve_ficheiroF));
                 if (num_bytes == -1) {
-                    perror("Erro ao escrever no arquivo");
+                    perror("Erro ao escrever no ficheiro\n");
                     close(fd);
                     return 1;
                 }
@@ -428,7 +442,7 @@ int main(int argc, char ** argv){
 
                 fd_pid = open(path_final, O_WRONLY | O_CREAT, 0600);
                 if (fd == -1) {
-                    perror("Erro ao abrir o arquivo");
+                    perror("Erro ao abrir o ficheiro\n");
                     return 1;
                 }
 
@@ -444,7 +458,7 @@ int main(int argc, char ** argv){
 
                 int num_bytes = write(fd_pid, &escreve_ficheiroF, strlen(escreve_ficheiroF));
                 if (num_bytes == -1) {
-                    perror("Erro ao escrever no arquivo");
+                    perror("Erro ao escrever no ficheiro\n");
                     close(fd);
                     return 1;
                 }
@@ -462,7 +476,7 @@ int main(int argc, char ** argv){
             int fd1 = open("../bin/fifo1",O_WRONLY,0660);
 
             if(fd1 < 0){
-                perror("Error to open fifo\n");
+                perror("Erro ao abrir o fifo\n");
             }
 
             for(int j = 0;j<i;j++){
@@ -516,7 +530,7 @@ int main(int argc, char ** argv){
                 int fd2 = open("../bin/fifo2",O_RDONLY);
 
                 if(fd2 < 0){
-                    perror("Error to open fifo\n");
+                    perror("Erro ao abrir o fifo\n");
                 }
 
                 string_final = malloc(sizeof(buffer2));
@@ -535,7 +549,7 @@ int main(int argc, char ** argv){
                 int fd3 = open("../bin/fifo2",O_WRONLY);
 
                 if(fd3 < 0){
-                    perror("Error to open fifo\n");
+                    perror("Erro ao abrir o fifo\n");
                 }
 
                 int t2 = snprintf(buffer3,30,"%ld",resultado);
@@ -554,7 +568,7 @@ int main(int argc, char ** argv){
                 int fd2 = open("../bin/fifo3",O_RDONLY);
 
                 if(fd2 < 0){
-                    perror("Error to open fifo\n");
+                    perror("Erro ao abrir o fifo\n");
                 }
 
                 
@@ -586,7 +600,7 @@ int main(int argc, char ** argv){
                 int fd2 = open("../bin/fifo4",O_RDONLY);
 
                 if(fd2 < 0){
-                    perror("Error to open fifo\n");
+                    perror("Error ao abrir o fifo\n");
                 }
                 
                 string_final = malloc(sizeof(buffer2));
@@ -609,7 +623,7 @@ int main(int argc, char ** argv){
                 int fd3 = open("../bin/fifo4",O_WRONLY);
 
                 if(fd3 < 0){
-                    perror("Error to open fifo\n"); 
+                    perror("Erro ao abrir o fifo\n"); 
                 }
 
                 int t2 = snprintf(buffer3,10,"%d",resultado);

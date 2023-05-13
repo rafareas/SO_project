@@ -51,7 +51,7 @@ int executaU(char* comando){
     pid_t res = fork();
     
     if(res<0){
-        perror("Erro no fork");
+        perror("Erro ao criar o fork\n");
     }
     if(res==0){
         close(fd1[0]);
@@ -102,10 +102,6 @@ int executaU(char* comando){
             exec_args2[i]=final;
             i++;
         }
-
-        //meter em variaveis o .sec e .usec
-
-        long tempoi_sec = atol(exec_args2[1]);
     
         long result =((end.tv_usec - atol(exec_args2[2]))/1000) + ((end.tv_sec - atol(exec_args2[1]))*1000);
 
@@ -160,6 +156,9 @@ int executaP(char* comando){
         if(i==0){
             pipe(pipes[i]);
             int fres=fork();
+            if(fres<0){
+                perror("Erro ao criar o fork\n");
+            }
             if(fres==0){
                 close(fd);
                 close(pipes[i][0]);
@@ -174,6 +173,9 @@ int executaP(char* comando){
         }
         if(i==ncommads-1){
             int fres=fork();
+            if(fres<0){
+                perror("Erro ao criar o fork\n");
+            }
             if(fres==0){
                 close(fd);
                 dup2(pipes[i-1][0],0);
@@ -187,6 +189,9 @@ int executaP(char* comando){
         else{
             pipe(pipes[i]);
             int fres=fork();
+            if(fres<0){
+                perror("Erro ao criar o fork\n");
+            }
             if(fres==0){
                 close(fd);
                 dup2(pipes[i-1][0],0);
@@ -238,7 +243,7 @@ int status(){
     int fd = open("../bin/fifo",O_WRONLY);
 
     if(fd < 0){
-        perror("Error to open fifo\n");
+        perror("Erro ao abrir o fifo\n");
     }
 
     int t = snprintf(buffer,20,"%s",ex);
@@ -249,7 +254,7 @@ int status(){
     int fd1 = open("../bin/fifo1",O_RDONLY,0660);
 
     if(fd1 < 0){
-        perror("Error to open fifo\n");
+        perror("Erro ao abrir o fifo\n");
     }
 
    string_final = malloc(sizeof(buffer2));   
@@ -285,7 +290,7 @@ void stats_time(char *command){
     int fd = open("../bin/fifo",O_WRONLY);
 
     if(fd < 0){
-        perror("Error to open fifo\n");
+        perror("Erro ao abrir o fifo\n");
     }
 
     int t = snprintf(buffer,20,"%s",ex);
@@ -296,7 +301,7 @@ void stats_time(char *command){
     int fd1 = open("../bin/fifo2",O_WRONLY);
 
     if(fd1 < 0){
-        perror("Error to open fifo\n");
+        perror("Erro ao abrir o fifo\n");
     }
 
     int t1 = snprintf(buffer2,30,"%s",comando);
@@ -307,7 +312,7 @@ void stats_time(char *command){
     int fd2 = open("../bin/fifo2",O_RDONLY);
 
     if(fd2 < 0){
-        perror("Error to open fifo\n");
+        perror("Erro ao abrir o fifo\n");
     }
 
     while((bytes_read=read(fd2,&buffer3,sizeof(buffer3)))>0){
@@ -336,7 +341,7 @@ void stats_uniq(char *command){
     int fd = open("../bin/fifo",O_WRONLY);
 
     if(fd < 0){
-        perror("Error to open fifo\n");
+        perror("Erro ao abrir o fifo\n");
     }
 
     int t = snprintf(buffer,20,"%s",ex);
@@ -347,7 +352,7 @@ void stats_uniq(char *command){
     int fd1 = open("../bin/fifo3",O_WRONLY);
 
     if(fd1 < 0){
-        perror("Error to open fifo\n");
+        perror("Erro ao abrir o fifo\n");
     }
 
     int t1 = snprintf(buffer2,30,"%s",comando);
@@ -358,7 +363,7 @@ void stats_uniq(char *command){
     int fd2 = open("../bin/fifo3",O_RDONLY);
 
     if(fd2 < 0){
-        perror("Error to open fifo\n");
+        perror("Erro ao abrir o fifo\n");
     }
 
     string_final = malloc(sizeof(buffer2));
@@ -391,7 +396,7 @@ void stats_command(char *comando1,char* comando2){
     int fd = open("../bin/fifo",O_WRONLY);
 
     if(fd < 0){
-        perror("Error to open fifo\n");
+        perror("Erro ao abrir fifo\n");
     }
 
     int t = snprintf(buffer,20,"%s",ex);
@@ -402,7 +407,7 @@ void stats_command(char *comando1,char* comando2){
     int fd1 = open("../bin/fifo4",O_WRONLY);
 
     if(fd1 < 0){
-        perror("Error to open fifo\n");
+        perror("Erro ao abrir o fifo\n");
     }
 
     int t1 = snprintf(buffer2,30,"%s_%s",comando,scomando);
@@ -413,7 +418,7 @@ void stats_command(char *comando1,char* comando2){
     int fd2 = open("../bin/fifo4",O_RDONLY);
 
     if(fd2 < 0){
-        perror("Error to open fifo\n");
+        perror("Erro ao abrir o fifo\n");
     }
     
     while((bytes_read3=read(fd2,&buffer3,sizeof(buffer3)))>0){
