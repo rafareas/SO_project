@@ -13,7 +13,7 @@
 
 int exec_command(char * cmd){
 
-    char* args[10];
+    char* args[20];
     
     char* string;
     int i = 0;
@@ -114,7 +114,8 @@ int executaU(char* comando){
             i++;
         }
 
-        
+        //meter em variaveis o .sec e .usec
+
         long tempoi_sec = atol(exec_args2[1]);
     
         long result =((end.tv_usec - atol(exec_args2[2]))/1000) + ((end.tv_sec - atol(exec_args2[1]))*1000);
@@ -230,14 +231,20 @@ int executaP(char* comando){
     write(fd,buffer,t);
 
     close(fd);
-
-    printf("Pipeline terminada\n");
     return 0;
 }
 
 int status(){
-    char buffer[20];
+    char * string;
     char *ex = "status";
+    char *string_final;
+    char* nova_string;
+    char* exec_args[50];
+    char buffer[20];
+    char buffer2[512];
+    int bytes_read;
+    int i =0;
+    int k=0;
 
     int fd = open("../bin/fifo",O_WRONLY);
 
@@ -250,39 +257,25 @@ int status(){
 
     close(fd);
 
-
     int fd1 = open("../bin/fifo1",O_RDONLY,0660);
 
     if(fd1 < 0){
         perror("Error to open fifo\n");
-   }
+    }
 
-   int bytes_read;
-   char * string2;
-   
-   char buffer2[512];
-   char *string_final;
-   string_final = malloc(sizeof(buffer2));
-   char* exec_args[50];
-   int i =0;
-
+   string_final = malloc(sizeof(buffer2));   
 
     while((bytes_read = read(fd1,&buffer2,sizeof(buffer2)))>0){
-                string2 = malloc(sizeof(buffer2));
-                memcpy(string2,buffer2,bytes_read);
-                strcat(string_final,string2);
+                string = malloc(sizeof(buffer2));
+                memcpy(string,buffer2,bytes_read);
+                strcat(string_final,string);
                 memset(buffer2,0,sizeof(buffer2));
                 i++;
-        }
-
-
-    char* nova_string;
-    char* exec_args2[50];
-    int k=0;
+    }
 
     while((nova_string=strsep(&string_final,"_"))!=NULL){
-        exec_args2[i]=nova_string;
-        printf("%s\n",exec_args2[i]);
+        exec_args[k]=nova_string;
+        printf("%s\n",exec_args[k]);
         k++;
     }
 
@@ -291,9 +284,14 @@ int status(){
 }
 
 void stats_time(char *command){
+    char *new_string;
     char *comando = strdup(command);
-    char buffer[20];
     char *ex = "stats-time";
+    char buffer[20];
+    char buffer2[30];
+    char buffer3[30];
+    ssize_t bytes_read;
+    long int aux;
 
     int fd = open("../bin/fifo",O_WRONLY);
 
@@ -312,12 +310,9 @@ void stats_time(char *command){
         perror("Error to open fifo\n");
     }
 
-    char buffer2[30];
-
     int t1 = snprintf(buffer2,30,"%s",comando);
     write(fd1,buffer2,t1);
     
-
     close(fd1);
 
     int fd2 = open("../bin/fifo2",O_RDONLY);
@@ -326,15 +321,9 @@ void stats_time(char *command){
         perror("Error to open fifo\n");
     }
 
-    char buffer3[30];
-    ssize_t bytes_read3;
-    char *new_string;
-    long int aux;
-
-    while((bytes_read3=read(fd2,&buffer3,sizeof(buffer3)))>0){
-            
+    while((bytes_read=read(fd2,&buffer3,sizeof(buffer3)))>0){
             new_string = malloc(sizeof(buffer3));
-            memcpy(new_string,buffer3,bytes_read3);
+            memcpy(new_string,buffer3,bytes_read);
             memset(buffer3,0,sizeof(buffer3));
             aux = atol(new_string);
     }
@@ -342,9 +331,18 @@ void stats_time(char *command){
 }
 
 void stats_uniq(char *command){
+    char *new_string;
+    char *nova_string;
+    char *string_final;
     char *comando = strdup(command);
-    char buffer[20];
     char *ex = "stats-uniq";
+    char *array[20];
+    char buffer[20];
+    char buffer2[30];
+    char buffer3[50];
+    ssize_t bytes_read;
+    long int aux;
+    int i = 0;
 
     int fd = open("../bin/fifo",O_WRONLY);
 
@@ -363,13 +361,9 @@ void stats_uniq(char *command){
         perror("Error to open fifo\n");
     }
 
-    char buffer2[30];
-
-
     int t1 = snprintf(buffer2,30,"%s",comando);
     write(fd1,buffer2,t1);
     
-
     close(fd1);
 
     int fd2 = open("../bin/fifo3",O_RDONLY);
@@ -378,23 +372,14 @@ void stats_uniq(char *command){
         perror("Error to open fifo\n");
     }
 
-    char buffer3[50];
-    ssize_t bytes_read3;
-    char *new_string;
-    long int aux;
-    char *string_final;
     string_final = malloc(sizeof(buffer2));
 
-    while((bytes_read3=read(fd2,&buffer3,sizeof(buffer3)))>0){
+    while((bytes_read=read(fd2,&buffer3,sizeof(buffer3)))>0){
             new_string = malloc(sizeof(buffer3));
-            memcpy(new_string,buffer3,bytes_read3);
+            memcpy(new_string,buffer3,bytes_read);
             strcat(string_final,new_string);
             memset(buffer3,0,sizeof(buffer3));
     }
-    int i = 0;
-
-    char *nova_string;
-    char *array[20];
 
     while((nova_string=strsep(&string_final,"_"))!=NULL){
             array[i] = nova_string;
@@ -404,10 +389,15 @@ void stats_uniq(char *command){
 }
 
 void stats_command(char *comando1,char* comando2){
+    char *new_string;
     char *comando = strdup(comando1);
     char *scomando = strdup(comando2);
-    char buffer[20];
     char *ex = "stats-command";
+    char buffer[20];
+    char buffer2[30];
+    char buffer3[30];
+    ssize_t bytes_read3;
+    int aux;
 
     int fd = open("../bin/fifo",O_WRONLY);
 
@@ -426,14 +416,9 @@ void stats_command(char *comando1,char* comando2){
         perror("Error to open fifo\n");
     }
 
-    char buffer2[30];
-
-
     int t1 = snprintf(buffer2,30,"%s_%s",comando,scomando);
-    //write(1,buffer2,t1);
     write(fd1,buffer2,t1);
     
-
     close(fd1);
 
     int fd2 = open("../bin/fifo4",O_RDONLY);
@@ -441,12 +426,7 @@ void stats_command(char *comando1,char* comando2){
     if(fd2 < 0){
         perror("Error to open fifo\n");
     }
-
-    char buffer3[30];
-    ssize_t bytes_read3;
-    char *new_string;
-    int aux;
-
+    
     while((bytes_read3=read(fd2,&buffer3,sizeof(buffer3)))>0){
             new_string = malloc(sizeof(buffer3));
             memcpy(new_string,buffer3,bytes_read3);

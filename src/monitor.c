@@ -11,26 +11,25 @@
 
 
 long int stats_time(char *command,int argc){
-    long int tot = 0;
-    int i = 0;
     char *exec_args[20];
     char *nova_string=strdup(command);
     char *string;
     char *string_txt;
-
-    printf("cheguei aqui\n");
-
+    long int tot = 0;
+    int i = 0;
 
     while((string=strsep(&nova_string," "))!=NULL){
         exec_args[i]=string;
         i++;
     }
-  
-   
+
     for(int j = 0;j < i;j++){
+        char *new_string;
         char buffer[10];
         ssize_t bytes_read;
+        long int aux;
         int fd;
+        int t = 0;
 
         char *file_name = malloc(strlen(exec_args[j]) + 5);
 
@@ -65,11 +64,7 @@ long int stats_time(char *command,int argc){
                 }
 
             }
-
-        char *new_string;
-        long int aux;
-
-        int t = 0;
+        
         while ((bytes_read = read(fd, buffer,sizeof(buffer))) > 0){
             new_string = malloc(sizeof(buffer));
             memcpy(new_string,buffer,bytes_read);
@@ -78,6 +73,7 @@ long int stats_time(char *command,int argc){
         }
 
         if(t>0){
+
         close(fd);
 
         char* string_final;
@@ -109,13 +105,14 @@ void stats_uniq(char *command,int argc){
         exec_args[i]=string;
         i++;
     }
-  
-    char* string_final;
 
     for(int j = 0;j < i;j++){
+        char *new_string;
         char buffer[20];
         ssize_t bytes_read;
         int fd;
+        long int aux;
+        int t =0;
 
         char *file_name = malloc(strlen(exec_args[j]) + 5);
 
@@ -142,18 +139,13 @@ void stats_uniq(char *command,int argc){
                 strcat(name_inter,name_pid_fd);
                 strcat(path_final,name_inter);
 
-                printf("path final:%s",path_final);
                 fd = open(path_final, O_RDONLY);
                 if (fd == -1) {
                     perror("Erro ao abrir o arquivo");
                 }
 
             }
-
-        char *new_string;
-        long int aux;
-
-        int t =0;
+        
         while ((bytes_read = read(fd, buffer,sizeof(buffer))) > 0){
             new_string = malloc(sizeof(buffer));
             memcpy(new_string,buffer,bytes_read);
@@ -165,17 +157,14 @@ void stats_uniq(char *command,int argc){
 
         close(fd);
 
-        
         char* array[3];
         int k =0;
         char *string_final;
 
         while((nova_string=strsep(&new_string,"_"))!=NULL){
             array[k] = nova_string;
-            printf("%s\n",array[k]);
             k++;
             }
-
 
         int fd3 = open("../bin/fifo3",O_WRONLY);
 
@@ -206,13 +195,14 @@ int stats_command(char *comando1,char *comando2,int argc){
         exec_args[i]=string;
         i++;
     }
-  
-    char* string_final;
 
     for(int j = 0;j < i;j++){
+        char *new_string;
         char buffer[10];
         ssize_t bytes_read;
+        long int aux;
         int fd;
+        int t =0;
 
         char *file_name = malloc(strlen(exec_args[j]) + 5);
 
@@ -239,18 +229,12 @@ int stats_command(char *comando1,char *comando2,int argc){
                 strcat(name_inter,name_pid_fd);
                 strcat(path_final,name_inter);
 
-                printf("path:%s\n",path_final);
-
                 fd = open(path_final, O_RDONLY);
                 if (fd == -1) {
                     perror("Erro ao abrir o arquivo");
                 }
 
             }
-
-        char *new_string;
-        long int aux;
-        int t =0;
 
         while ((bytes_read = read(fd, buffer,sizeof(buffer))) > 0){
             new_string = malloc(sizeof(buffer));
@@ -262,8 +246,6 @@ int stats_command(char *comando1,char *comando2,int argc){
         if(t>0){
 
         close(fd);
-        printf("string: %s\n",new_string);
-
         
         char* array[2];
         int k =0;
@@ -283,12 +265,11 @@ int stats_command(char *comando1,char *comando2,int argc){
 
 int main(int argc, char ** argv){
 
-    int bytes_read;
-    
     char buffer[50];
     int i=0;
     char *exec_args[20];
     char * string;
+    int bytes_read;
 
     while(1){
 
@@ -329,7 +310,6 @@ int main(int argc, char ** argv){
             }
         
         if(strcmp("executaU",array[0])==0){
-            printf("entrei no executaU\n");
             
             if(argc==1){
                 char name_pid_fd[24];
@@ -398,12 +378,16 @@ int main(int argc, char ** argv){
             }
         
         if(strcmp("executaP",array[0])==0){
-            printf("entrei no executaP\n");
 
             int fd_pid;
             
             if(argc==1){
+                char escreve_ficheiro[20];
+                char escreve_ficheiroF[20];
                 char name_pid_fd[24];
+                char *arrayU[8];
+                char *string_execu;
+                int l=0;
             
                 strcpy(name_pid_fd, array[2]);
                 strcat(name_pid_fd, ".txt");
@@ -414,18 +398,11 @@ int main(int argc, char ** argv){
                     return 1;
                 }
 
-                char *arrayU[8];
-                char *string_execu;
-                int l=0;
-                printf("%s\n",string_reserv);
-
                 while((string_execu=strsep(&string_reserv,"_"))!=NULL){
                     arrayU[l] = string_execu;
                     l++;
                 }
 
-                char escreve_ficheiro[20];
-                char escreve_ficheiroF[20];
                 strcpy(escreve_ficheiroF,arrayU[1]);
                 strcat(escreve_ficheiroF,"_");
                 strcpy(escreve_ficheiro,array[1]);
@@ -442,10 +419,17 @@ int main(int argc, char ** argv){
             }
             else if(argc==2){
 
+                char escreve_ficheiro[20];
+                char escreve_ficheiroF[20];
                 char name_pid_fd[24];
                 char name_inter[24];
                 char path_final[24];
+                char *string_execu;
                 char *path = "../";
+                char *arrayU[8];
+                int l=0;
+
+
                 strcpy(path_final,path);
                 strcat(path_final,argv[1]);
                 strcpy(name_pid_fd, array[2]);
@@ -460,17 +444,11 @@ int main(int argc, char ** argv){
                     return 1;
                 }
 
-                char *arrayU[8];
-                char *string_execu;
-                int l=0;
-
                 while((string_execu=strsep(&string_reserv,"_"))!=NULL){
                     arrayU[l] = string_execu;
                     l++;
                 }
 
-                char escreve_ficheiro[20];
-                char escreve_ficheiroF[20];
                 strcpy(escreve_ficheiroF,arrayU[1]);
                 strcat(escreve_ficheiroF,"_");
                 strcpy(escreve_ficheiro,array[1]);
@@ -489,16 +467,15 @@ int main(int argc, char ** argv){
         }
 
         else if(strcmp("status",array[0])==0){
-            printf("entrei no status\n");
 
-             int fd1 = open("../bin/fifo1",O_WRONLY,0660);
+            char * array2[5];
+            char * nova_string2;
+
+            int fd1 = open("../bin/fifo1",O_WRONLY,0660);
 
             if(fd1 < 0){
                 perror("Error to open fifo\n");
             }
-
-            char * array2[5];
-            char * nova_string2;
 
             for(int j = 0;j<i;j++){
 
@@ -512,7 +489,7 @@ int main(int argc, char ** argv){
                 }
             
                 if(strcmp("executaU",array2[0])==0){
-                    printf("entrei na criaçao U\n");
+
                     char buffer_novo[30];
 
                     int t1 = snprintf(buffer_novo,40,"%d %s %s ms_",atoi(array2[3]),array2[1],array2[2]);
@@ -520,18 +497,16 @@ int main(int argc, char ** argv){
                 }
 
                 else if(strcmp("executaP",array2[0])==0){
-                    printf("entrei na criaçao P\n");
 
                     char *arrayU[2];
                     char *string_execu;
+                    char buffer_novo[50];
                     int l=0;
 
                     while((string_execu=strsep(&string_status,"_"))!=NULL){
                         arrayU[l] = string_execu;
                         l++;
                     }
-
-                    char buffer_novo[50];
 
                     int t1 = snprintf(buffer_novo,50,"%d %s %s ms_",atoi(array2[2]),arrayU[1],array2[1]);
                     write(fd1,buffer_novo,t1);
@@ -540,19 +515,22 @@ int main(int argc, char ** argv){
 
             close(fd1);
             _exit(0);
-            }
+        }
             else if(strcmp("stats-time",array[0])==0){
-                printf("entrei stats-time\n");
+
+                char buffer2[50];
+                char buffer3[30];
+                char *string2;
+                char *string_final;
+                ssize_t bytes_read2;
+                long int resultado;
+                
                 int fd2 = open("../bin/fifo2",O_RDONLY);
 
                 if(fd2 < 0){
                     perror("Error to open fifo\n");
                 }
 
-                ssize_t bytes_read2;
-                char buffer2[50];
-                char *string2;
-                char *string_final;
                 string_final = malloc(sizeof(buffer2));
 
                 while((bytes_read2=read(fd2,&buffer2,sizeof(buffer2)))>0){
@@ -564,7 +542,7 @@ int main(int argc, char ** argv){
 
                 close(fd2);
 
-                long int resultado=stats_time(string_final,argc);
+                resultado=stats_time(string_final,argc);
 
                 int fd3 = open("../bin/fifo2",O_WRONLY);
 
@@ -572,7 +550,6 @@ int main(int argc, char ** argv){
                     perror("Error to open fifo\n");
                 }
 
-                char buffer3[30];
                 int t2 = snprintf(buffer3,30,"%ld",resultado);
                 write(fd3,buffer3,t2);
 
@@ -580,17 +557,19 @@ int main(int argc, char ** argv){
             }
 
             else if(strcmp("stats-uniq",array[0])==0){
-                printf("entrei stats-uniq\n");
+                
+                char buffer2[50];
+                char *string2;
+                char *string_final;
+                ssize_t bytes_read2;
+
                 int fd2 = open("../bin/fifo3",O_RDONLY);
 
                 if(fd2 < 0){
                     perror("Error to open fifo\n");
                 }
 
-                ssize_t bytes_read2;
-                char buffer2[50];
-                char *string2;
-                char *string_final;
+                
                 string_final = malloc(sizeof(buffer2));
 
                 while((bytes_read2=read(fd2,&buffer2,sizeof(buffer2)))>0){
@@ -606,17 +585,22 @@ int main(int argc, char ** argv){
 
             }
             else if(strcmp("stats-command",array[0])==0){
-                printf("entrei stats-command\n");
+                
+                char buffer2[50];
+                char buffer3[10];
+                char *string2;
+                char *string_final;
+                char *string_statsC;
+                char *arraySC[2];
+                ssize_t bytes_read2;
+                int j =0;
+                
                 int fd2 = open("../bin/fifo4",O_RDONLY);
 
                 if(fd2 < 0){
                     perror("Error to open fifo\n");
                 }
-
-                ssize_t bytes_read2;
-                char buffer2[50];
-                char *string2;
-                char *string_final;
+                
                 string_final = malloc(sizeof(buffer2));
 
                 while((bytes_read2=read(fd2,&buffer2,sizeof(buffer2)))>0){
@@ -627,18 +611,11 @@ int main(int argc, char ** argv){
                 }
                 close(fd2);
 
-                int j =0;
-                char *string_statsC;
-                char *arraySC[2];
-
                 while((string_statsC=strsep(&string_final,"_"))!=NULL){
                     array[j] = string_statsC;
-                    printf("%s\n",array[j]);
                     j++;
                 }
 
-                printf("resultados\n"),
-                printf("%s\n%s\n",array[0],array[1]);
                 int resultado = stats_command(array[0],array[1],argc);
 
                 int fd3 = open("../bin/fifo4",O_WRONLY);
@@ -646,8 +623,6 @@ int main(int argc, char ** argv){
                 if(fd3 < 0){
                     perror("Error to open fifo\n"); 
                 }
-
-                char buffer3[10];
 
                 int t2 = snprintf(buffer3,10,"%d",resultado);
                 write(fd3,buffer3,t2);
@@ -663,9 +638,8 @@ int main(int argc, char ** argv){
     close(fd);
     }
 
-
-    memset(buffer,0,sizeof(buffer));
-    memset(exec_args,0,sizeof(exec_args));
+memset(buffer,0,sizeof(buffer));
+memset(exec_args,0,sizeof(exec_args));
 
 return 0;
 
