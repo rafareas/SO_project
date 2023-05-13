@@ -17,3 +17,4 @@ int status();
 void stats_time(char *command);
 void stats_uniq(char *command);
 void stats_command(char *comando1,char* comando2);
+int main(int argc, char **argv);

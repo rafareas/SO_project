@@ -1,13 +1,4 @@
-#include <sys/types.h>
-#include <sys/stat.h> 
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h> /* chamadas ao sistema: defs e decls essenciais */
-#include <fcntl.h> /* O_RDONLY, O_WRONLY, O_CREAT, O_* */
-#include <unistd.h> /* chamadas ao sistema: defs e decls essenciais */
-#include <sys/wait.h> /* chamadas wait*() e macros relacionadas */
-#include <string.h>
-#include <math.h>
+#include "../include/monitor.h"
 
 
 long int stats_time(char *command,int argc){
@@ -56,8 +47,6 @@ long int stats_time(char *command,int argc){
                 strcat(name_inter,name_pid_fd);
                 strcat(path_final,name_inter);
 
-                printf("path:%s\n",path_final);
-
                 fd = open(path_final, O_RDONLY);
                 if (fd == -1) {
                     perror("Erro ao abrir o arquivo");
@@ -82,7 +71,6 @@ long int stats_time(char *command,int argc){
 
         while((nova_string=strsep(&new_string,"_"))!=NULL){
             array[k] = nova_string;
-            printf("%s\n",array[k]);
             k++;
             }
         aux = atol(array[1]);

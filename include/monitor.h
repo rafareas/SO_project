@@ -12,3 +12,4 @@
 long int stats_time(char *command,int argc);
 void stats_uniq(char *command,int argc);
 int stats_command(char *comando1,char *comando2,int argc);
+int main(int argc, char ** argv);
