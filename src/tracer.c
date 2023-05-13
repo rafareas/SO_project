@@ -226,7 +226,7 @@ int executaP(char* comando){
 
     char buffer[50];
     char *ex = "executaP";
-    int t = snprintf(buffer,50,"%s %s %ld %d",ex,comando,result,pid);
+    int t = snprintf(buffer,50,"%s %ld %d _%s_",ex,result,pid,comando);
     write(fd,buffer,t);
 
     close(fd);
@@ -378,7 +378,7 @@ void stats_uniq(char *command){
         perror("Error to open fifo\n");
     }
 
-    char buffer3[30];
+    char buffer3[50];
     ssize_t bytes_read3;
     char *new_string;
     long int aux;
@@ -386,7 +386,6 @@ void stats_uniq(char *command){
     string_final = malloc(sizeof(buffer2));
 
     while((bytes_read3=read(fd2,&buffer3,sizeof(buffer3)))>0){
-            
             new_string = malloc(sizeof(buffer3));
             memcpy(new_string,buffer3,bytes_read3);
             strcat(string_final,new_string);

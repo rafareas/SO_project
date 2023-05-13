@@ -62,7 +62,6 @@ long int stats_time(char *command,int argc){
                 fd = open(path_final, O_RDONLY);
                 if (fd == -1) {
                     perror("Erro ao abrir o arquivo");
-                    return 1;
                 }
 
             }
@@ -70,15 +69,15 @@ long int stats_time(char *command,int argc){
         char *new_string;
         long int aux;
 
+        int t = 0;
         while ((bytes_read = read(fd, buffer,sizeof(buffer))) > 0){
             new_string = malloc(sizeof(buffer));
             memcpy(new_string,buffer,bytes_read);
             memset(buffer,0,sizeof(buffer));
-            //aux = atol(new_string);
-            
-            //tot += aux;
+            t++;
         }
 
+        if(t>0){
         close(fd);
 
         char* string_final;
@@ -92,22 +91,19 @@ long int stats_time(char *command,int argc){
             }
         aux = atol(array[1]);
         tot+=aux;
-
+        }
     }
-
     return tot;
 }
 
-void stats_uniq(char *command,int argc){
+char* stats_uniq(char *command,int argc){
     long int tot = 0;
     int i = 0;
     char *exec_args[20];
     char *nova_string=strdup(command);
     char *string;
     char *string_txt;
-
-    printf("cheguei aqui\n");
-
+    char final[100];
 
     while((string=strsep(&nova_string," "))!=NULL){
         exec_args[i]=string;
@@ -117,7 +113,7 @@ void stats_uniq(char *command,int argc){
     char* string_final;
 
     for(int j = 0;j < i;j++){
-        char buffer[10];
+        char buffer[20];
         ssize_t bytes_read;
         int fd;
 
@@ -146,12 +142,10 @@ void stats_uniq(char *command,int argc){
                 strcat(name_inter,name_pid_fd);
                 strcat(path_final,name_inter);
 
-                printf("path:%s\n",path_final);
 
                 fd = open(path_final, O_RDONLY);
                 if (fd == -1) {
                     perror("Erro ao abrir o arquivo");
-                    return 1;
                 }
 
             }
@@ -159,22 +153,29 @@ void stats_uniq(char *command,int argc){
         char *new_string;
         long int aux;
 
+        int t =0;
         while ((bytes_read = read(fd, buffer,sizeof(buffer))) > 0){
             new_string = malloc(sizeof(buffer));
             memcpy(new_string,buffer,bytes_read);
             memset(buffer,0,sizeof(buffer));
+            t++;
         }
+
+        if(t>0){
+
+        close(fd);
 
         
         char* array[3];
         int k =0;
+        char *string_final;
 
-        while((nova_string=strsep(&new_string,"_"))!=NULL){
-            array[k] = nova_string;
+        while((string_final=strsep(&new_string,"_"))!=NULL){
+            array[k] = string_final;
             printf("%s\n",array[k]);
             k++;
             }
-        
+
 
         int fd3 = open("../bin/fifo3",O_WRONLY);
 
@@ -182,13 +183,16 @@ void stats_uniq(char *command,int argc){
           perror("Error to open fifo\n"); 
         }
 
-        char buffer2[10];
+        char buffer2[20];
 
-        int t2 = snprintf(buffer2,10,"%s_",array[0]);
+        int t2 = snprintf(buffer2,20,"%s_",array[0]);
+        write(1,buffer2,t2);
         write(fd3,buffer2,t2);
 
         close(fd3);
+        }
     }
+    return final;
 }
 
 int stats_command(char *comando1,char *comando2,int argc){
@@ -273,7 +277,6 @@ int stats_command(char *comando1,char *comando2,int argc){
             }
         
         if(strcmp(compare,array[0])==0){
-            printf("entrei\n");
             tot++;
         }
 
@@ -321,6 +324,7 @@ int main(int argc, char ** argv){
         char * array[6];
         char *nova_string;
         char *string_parte = strdup(exec_args[i]);
+        char *string_reserv = strdup(exec_args[i]);
 
         int k = 0;
 
@@ -378,8 +382,15 @@ int main(int argc, char ** argv){
                     perror("Erro ao abrir o arquivo");
                     return 1;
                 }
+
+                char escreve_ficheiro[20];
+                char escreve_ficheiroF[20];
+                strcpy(escreve_ficheiroF,array[1]);
+                strcat(escreve_ficheiroF,"_");
+                strcpy(escreve_ficheiro,array[2]);
+                strcat(escreve_ficheiroF,escreve_ficheiro);
         
-                int num_bytes = write(fd_pid, array[2], strlen(array[2]));
+                int num_bytes = write(fd_pid, &escreve_ficheiroF, strlen(escreve_ficheiroF));
                 if (num_bytes == -1) {
                     perror("Erro ao escrever no arquivo");
                     close(fd);
@@ -394,28 +405,93 @@ int main(int argc, char ** argv){
         if(strcmp("executaP",array[0])==0){
             printf("entrei no executaP\n");
 
-            char name_pid_fd[24];
-    
-            strcpy(name_pid_fd, array[4]);
-            strcat(name_pid_fd, ".txt");
+            int fd_pid;
+            
+            if(argc==1){
+                char name_pid_fd[24];
+            
+                strcpy(name_pid_fd, array[2]);
+                strcat(name_pid_fd, ".txt");
 
-            int fd_pid = open(name_pid_fd, O_WRONLY | O_CREAT, 0600);
-            if (fd == -1) {
-                perror("Erro ao abrir o arquivo");
-                return 1;
-            }
+                fd_pid = open(name_pid_fd, O_WRONLY | O_CREAT, 0600);
+                if (fd == -1) {
+                    perror("Erro ao abrir o arquivo");
+                    return 1;
+                }
 
+                char *arrayU[8];
+                char *string_execu;
+                int l=0;
+                printf("%s\n",string_reserv);
+
+                while((string_execu=strsep(&string_reserv,"_"))!=NULL){
+                    arrayU[l] = string_execu;
+                    l++;
+                }
+
+                char escreve_ficheiro[20];
+                char escreve_ficheiroF[20];
+                strcpy(escreve_ficheiroF,arrayU[1]);
+                strcat(escreve_ficheiroF,"_");
+                strcpy(escreve_ficheiro,array[1]);
+                strcat(escreve_ficheiroF,escreve_ficheiro);
         
-            int num_bytes = write(fd_pid, array[3], strlen(array[3]));
-            if (num_bytes == -1) {
-                perror("Erro ao escrever no arquivo");
-                close(fd);
-                return 1;
-            }
+                int num_bytes = write(fd_pid, &escreve_ficheiroF, strlen(escreve_ficheiroF));
+                if (num_bytes == -1) {
+                    perror("Erro ao escrever no arquivo");
+                    close(fd);
+                    return 1;
+                }
 
-            close(fd_pid);
-            _exit(0);
+                close(fd_pid);
             }
+            else if(argc==2){
+
+                char name_pid_fd[24];
+                char name_inter[24];
+                char path_final[24];
+                char *path = "../";
+                strcpy(path_final,path);
+                strcat(path_final,argv[1]);
+                strcpy(name_pid_fd, array[2]);
+                strcat(name_pid_fd, ".txt");
+                strcpy(name_inter,"/");
+                strcat(name_inter,name_pid_fd);
+                strcat(path_final,name_inter);
+
+                fd_pid = open(path_final, O_WRONLY | O_CREAT, 0600);
+                if (fd == -1) {
+                    perror("Erro ao abrir o arquivo");
+                    return 1;
+                }
+
+                char *arrayU[8];
+                char *string_execu;
+                int l=0;
+
+                while((string_execu=strsep(&string_reserv,"_"))!=NULL){
+                    arrayU[l] = string_execu;
+                    l++;
+                }
+
+                char escreve_ficheiro[20];
+                char escreve_ficheiroF[20];
+                strcpy(escreve_ficheiroF,arrayU[1]);
+                strcat(escreve_ficheiroF,"_");
+                strcpy(escreve_ficheiro,array[1]);
+                strcat(escreve_ficheiroF,escreve_ficheiro);
+
+                int num_bytes = write(fd_pid, &escreve_ficheiroF, strlen(escreve_ficheiroF));
+                if (num_bytes == -1) {
+                    perror("Erro ao escrever no arquivo");
+                    close(fd);
+                    return 1;
+                }
+
+                close(fd_pid);
+            }
+            _exit(0);
+        }
 
         else if(strcmp("status",array[0])==0){
             printf("entrei no status\n");
@@ -433,6 +509,8 @@ int main(int argc, char ** argv){
 
                 int k = 0;
 
+                char* string_status = strdup(exec_args[j]);
+
                 while((nova_string2=strsep(&exec_args[j]," "))!=NULL){
                     array2[k] = nova_string2;
                     k++;
@@ -445,19 +523,22 @@ int main(int argc, char ** argv){
                     int t1 = snprintf(buffer_novo,40,"%d %s %s ms_",atoi(array2[3]),array2[1],array2[2]);
                     write(fd1,buffer_novo,t1);
                 }
-                //corrigir
-                else if(strcmp("executaP",array2[0])==0 && k==5){
+
+                else if(strcmp("executaP",array2[0])==0){
                     printf("entrei na criaçao P\n");
+
+                    char *arrayU[2];
+                    char *string_execu;
+                    int l=0;
+
+                    while((string_execu=strsep(&string_status,"_"))!=NULL){
+                        arrayU[l] = string_execu;
+                        l++;
+                    }
+
                     char buffer_novo[50];
 
-                    int t1 = snprintf(buffer_novo,50,"%d %s %s %s ms_",atoi(array2[4]),array2[1],array2[2],array2[3]);
-                    write(fd1,buffer_novo,t1);
-                }
-                else if(strcmp("executaP",array2[0])==0 && k==4){
-                    printf("entrei na criaçao P\n");
-                    char buffer_novo[50];
-
-                    int t1 = snprintf(buffer_novo,50,"%d %s %s ms_",atoi(array2[3]),array2[1],array2[2]);
+                    int t1 = snprintf(buffer_novo,50,"%d %s %s ms_",atoi(array2[2]),arrayU[1],array2[1]);
                     write(fd1,buffer_novo,t1);
                 }
             }
@@ -525,7 +606,7 @@ int main(int argc, char ** argv){
                 }
 
                 close(fd2);
-
+                
                 stats_uniq(string_final,argc);
 
             }
