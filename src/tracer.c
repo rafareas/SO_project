@@ -10,7 +10,6 @@
 #include <time.h>
 #include <string.h>
 
-#define MAX_BUFFER 50
 
 int exec_command(char * cmd){
 
@@ -69,12 +68,12 @@ int executaU(char* comando){
         close(fd1[0]);
 
         pid_t filho = getpid();
-        char buffer[MAX_BUFFER];
+        char buffer[50];
         printf("Running pid %d\n",filho);
 
         gettimeofday(&start,NULL);
 
-        int t2 = snprintf(buffer,MAX_BUFFER,"%d %ld %ld %s",filho,start.tv_sec,start.tv_usec,comando);
+        int t2 = snprintf(buffer,50,"%d %ld %ld %s",filho,start.tv_sec,start.tv_usec,comando);
         write(fd1[1],buffer,t2);
 
         close(fd1[1]);
@@ -87,7 +86,7 @@ int executaU(char* comando){
 
         close(fd1[1]);
 
-        char buffer[MAX_BUFFER];
+        char buffer[50];
         char *ex = "executaU";
         pid_t wait_pid = wait(&status);
         
@@ -120,7 +119,7 @@ int executaU(char* comando){
     
         long result =((end.tv_usec - atol(exec_args2[2]))/1000) + ((end.tv_sec - atol(exec_args2[1]))*1000);
 
-        int t2 = snprintf(buffer,MAX_BUFFER,"%s %s %ld %d",ex,exec_args2[3],result,atoi(exec_args2[0]));
+        int t2 = snprintf(buffer,50,"%s %s %ld %d",ex,exec_args2[3],result,atoi(exec_args2[0]));
         write(fd,buffer,t2);
         printf("Ended in %ld\n",result);
 
@@ -287,7 +286,6 @@ int status(){
         k++;
     }
 
-
     close(fd1);
     return 0;
 }
@@ -316,9 +314,7 @@ void stats_time(char *command){
 
     char buffer2[30];
 
-
     int t1 = snprintf(buffer2,30,"%s",comando);
-    //write(1,buffer2,t1);
     write(fd1,buffer2,t1);
     
 
@@ -371,7 +367,6 @@ void stats_uniq(char *command){
 
 
     int t1 = snprintf(buffer2,30,"%s",comando);
-    //write(1,buffer2,t1);
     write(fd1,buffer2,t1);
     
 
@@ -505,7 +500,6 @@ int main(int argc, char **argv){
         stats_command(comando1,comando2);
 
     }
-
 
     return 0;
 }

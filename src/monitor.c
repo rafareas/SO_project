@@ -78,6 +78,9 @@ long int stats_time(char *command,int argc){
             
             //tot += aux;
         }
+
+        close(fd);
+
         char* string_final;
         char* array[3];
         int k =0;
@@ -197,9 +200,6 @@ int stats_command(char *comando1,char *comando2,int argc){
     char *string;
     char *string_txt;
 
-    printf("cheguei aqui\n");
-
-
     while((string=strsep(&nova_string," "))!=NULL){
         exec_args[i]=string;
         i++;
@@ -249,27 +249,36 @@ int stats_command(char *comando1,char *comando2,int argc){
 
         char *new_string;
         long int aux;
+        int t =0;
 
         while ((bytes_read = read(fd, buffer,sizeof(buffer))) > 0){
             new_string = malloc(sizeof(buffer));
             memcpy(new_string,buffer,bytes_read);
             memset(buffer,0,sizeof(buffer));
+            t++;
         }
+        
+        if(t>0){
+
+        close(fd);
+        printf("string: %s\n",new_string);
 
         
-        char* array[3];
+        char* array[2];
         int k =0;
 
         while((nova_string=strsep(&new_string,"_"))!=NULL){
             array[k] = nova_string;
-            printf("%s\n",array[k]);
             k++;
             }
         
         if(strcmp(compare,array[0])==0){
+            printf("entrei\n");
             tot++;
         }
-        
+
+        free(new_string);
+        }
     }
     return tot;
 }
@@ -317,7 +326,6 @@ int main(int argc, char ** argv){
 
         while((nova_string=strsep(&string_parte," "))!=NULL){
             array[k] = nova_string;
-            printf("%s\n",array[k]);
             k++;
             }
         
@@ -342,8 +350,6 @@ int main(int argc, char ** argv){
                 strcat(escreve_ficheiroF,"_");
                 strcpy(escreve_ficheiro,array[2]);
                 strcat(escreve_ficheiroF,escreve_ficheiro);
-
-
         
                 int num_bytes = write(fd_pid, &escreve_ficheiroF, strlen(escreve_ficheiroF));
                 if (num_bytes == -1) {
@@ -366,8 +372,6 @@ int main(int argc, char ** argv){
                 strcpy(name_inter,"/");
                 strcat(name_inter,name_pid_fd);
                 strcat(path_final,name_inter);
-
-                printf("path:%s\n",path_final);
 
                 int fd_pid = open(path_final, O_WRONLY | O_CREAT, 0600);
                 if (fd == -1) {
@@ -441,6 +445,7 @@ int main(int argc, char ** argv){
                     int t1 = snprintf(buffer_novo,40,"%d %s %s ms_",atoi(array2[3]),array2[1],array2[2]);
                     write(fd1,buffer_novo,t1);
                 }
+                //corrigir
                 else if(strcmp("executaP",array2[0])==0 && k==5){
                     printf("entrei na criaçao P\n");
                     char buffer_novo[50];
@@ -452,7 +457,6 @@ int main(int argc, char ** argv){
                     printf("entrei na criaçao P\n");
                     char buffer_novo[50];
 
-
                     int t1 = snprintf(buffer_novo,50,"%d %s %s ms_",atoi(array2[3]),array2[1],array2[2]);
                     write(fd1,buffer_novo,t1);
                 }
@@ -462,7 +466,7 @@ int main(int argc, char ** argv){
             _exit(0);
             }
             else if(strcmp("stats-time",array[0])==0){
-                printf("entrei\n");
+                printf("entrei stats-time\n");
                 int fd2 = open("../bin/fifo2",O_RDONLY);
 
                 if(fd2 < 0){
@@ -500,7 +504,7 @@ int main(int argc, char ** argv){
             }
 
             else if(strcmp("stats-uniq",array[0])==0){
-                printf("entrei\n");
+                printf("entrei stats-uniq\n");
                 int fd2 = open("../bin/fifo3",O_RDONLY);
 
                 if(fd2 < 0){
@@ -526,7 +530,7 @@ int main(int argc, char ** argv){
 
             }
             else if(strcmp("stats-command",array[0])==0){
-                printf("entrei\n");
+                printf("entrei stats-command\n");
                 int fd2 = open("../bin/fifo4",O_RDONLY);
 
                 if(fd2 < 0){
@@ -546,9 +550,7 @@ int main(int argc, char ** argv){
                     memset(buffer2,0,sizeof(buffer2));
                 }
                 close(fd2);
-                //parsing
-                printf("string final : %s\n",string_final);
-                printf("a entrar no parsing\n");
+
                 int j =0;
                 char *string_statsC;
                 char *arraySC[2];
@@ -560,7 +562,7 @@ int main(int argc, char ** argv){
                 }
 
                 printf("resultados\n"),
-                printf("%s %s",array[0],array[1]);
+                printf("%s\n%s\n",array[0],array[1]);
                 int resultado = stats_command(array[0],array[1],argc);
 
                 int fd3 = open("../bin/fifo4",O_WRONLY);
